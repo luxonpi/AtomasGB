@@ -1,0 +1,22 @@
+/bin
+/cheats
+Emulicious.ini
+Emulicious.jar
+include
+lib
+libexec
+licenses
+# Ignore all .map files
+*.map
+
+# Ignore all .bat files
+*.bat
+
+# Ignore all .noi files
+*.noi
+*.asm
+*.lst
+*.sym
+*.ihx
+
+.DS_Store
