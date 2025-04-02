@@ -9,14 +9,19 @@
 #define GAME_STATE_COUNTDOWN 2
 #define GAME_STATE_GAME_OVER 3
 
+#define GAME_SUBSTATE_INPUT 0
+#define GAME_SUBSTATE_ABSORB_ANIMATION 1
+#define GAME_SUBSTATE_INSERT_ANIMATION 2
+#define GAME_SUBSTATE_REACTION_ANIMATION 3
+
 // Atom configuration
 #define INITIAL_ATOMS 5
 #define MAX_ATOMS 20
 #define HIGHEST_ATOM_NUMBER 3
 
 // Special atom types
-#define PLUS_ATOM 255
-#define MINUS_ATOM 254
+#define PLUS_ATOM 120
+#define MINUS_ATOM 121
 
 // External variables
 extern uint8_t highscore;
@@ -25,11 +30,12 @@ extern uint8_t numberOfAtoms;
 
 extern uint8_t atom_radius[MAX_ATOMS];
 extern uint8_t atom_angle[MAX_ATOMS];
-extern uint8_t atom_values[MAX_ATOMS];
+extern int8_t atom_values[MAX_ATOMS];
 
 extern uint8_t cursor_position;
 extern uint8_t center_atom_value;
 extern uint8_t game_state;
+extern uint8_t game_substate;
 
 // Function declarations
 void init_game(void);

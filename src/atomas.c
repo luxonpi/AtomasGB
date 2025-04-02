@@ -14,8 +14,9 @@ void main(void){
     // Disable interrupts and turn off display
     disable_interrupts();
     DISPLAY_ON;
-    LCDC_REG = LCDCF_OFF | LCDCF_OBJ8 | LCDCF_OBJON | LCDCF_BGON;
     SHOW_BKG;
+
+    LCDC_REG = LCDCF_OFF | LCDCF_OBJ8 | LCDCF_OBJON | LCDCF_BGON;
     OBP0_REG = 0xE4;
 
     font_init();                  // Initialize the font system
@@ -70,7 +71,8 @@ void main(void){
             update_game_display();
 
             // if a is pressed, insert an atom
-            if((curr_joypad & J_A) && !(prev_joypad & J_A)){
+            if((curr_joypad & J_A) && !(prev_joypad & J_A) && game_substate == GAME_SUBSTATE_INPUT){
+               
                 play_add_atom_sound();
                 insert_atom(cursor_position, center_atom_value, get_cursor_angle());
                 spawn_center_atom();

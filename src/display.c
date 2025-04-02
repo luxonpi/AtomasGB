@@ -10,26 +10,17 @@
 #include "spritetiles.h"
 #include "game.h"
 #include "sintables.h"
+#include "gamebg.h"
+// Place the background tiles into VRAM (set_bkg_data)  256 tiles
+// Showing the background  (set_bkg_tiles)
+
 
 // Define the global variables here
 struct Sprite AtomSprites[20];
 struct Sprite MiddleAtom;
 struct Sprite Cursor;
-uint8_t frame_counter = 0;
+uint8_t frame_counter = 2;
 
-// Replace init_text_display with this simpler version
-void write_score(uint8_t _score) {
-    // Move score display initialization here
-    char buffer[10];
-    sprintf(buffer, "%d", _score);
-
-    int score_width = strlen(buffer);
-    int total_width = score_width;
-    int start_x = (screen_center_x - total_width) / 2; 
-
-    gotoxy(start_x, 1);  // Position at top of screen
-    printf("%d", _score);
-}
 
 uint8_t getTileID(uint8_t value){
 
@@ -43,22 +34,61 @@ uint8_t getTileID(uint8_t value){
 
 }
 
+uint8_t GetCharacterVRamTile(char character) {
+
+    if(character >= '0'&&character <= '9') return (character-'0')+gamebg_TILE_COUNT;   
+    return 0;
+
+}
+
+void write_score(){
+
+    char buffer[10];
+    sprintf(buffer, "%d", score);
+
+    int score_width = strlen(buffer);
+    int total_width = score_width;
+    int start_x = (screen_center_x - total_width) / 2; 
+
+  
+    // Get the address of the first tile in the row
+    uint8_t* vramAddress = get_bkg_xy_addr(start_x,1);
+    uint16_t index=0;
+
+    while(buffer[index]!='\0'){
+
+        char character = buffer[index];
+
+        // Draw our character at the address
+        // THEN, increment the address
+        uint8_t vramTile = GetCharacterVRamTile(character);
+        set_vram_byte(vramAddress++,vramTile);
+        index++;
+    }
+
+}
+
 void init_game_display(void) {
-    // Clear the background first
-    fill_bkg_rect(0, 0, 20, 18, 0x00);  // Clear entire background
     
-    // Initialize font system again
-    font_init();
-    font_set(font_load(font_ibm));
-    
+    // Set background to white
+
+
+    fill_bkg_rect(0, 0, 20, 18, 0xFF);  // Clear entire background
+
+
+    set_bkg_data(gamebg_TILE_COUNT,11,NumberTiles);
+    set_bkg_data(0,gamebg_TILE_COUNT,gamebg_tiles);
+
+    set_bkg_tiles(0,0,20,18,gamebg_map);
+
+
+    write_score();
+  
+  
     set_sprite_data(0, 7, SpriteTiles);
-    BGP_REG = 0xE4;     // Set standard GB palette (dark to light)
     SHOW_SPRITES;
-    SHOW_BKG;           // Make sure background is visible
     
     // Clear any existing text
-    cls();              // Clear the screen before writing new text
-    write_score(highscore);
     
     MiddleAtom.prop = 0;
     set_sprite_prop(MAX_ATOMS, 0);
@@ -101,10 +131,8 @@ int min(int a, int b){
 
 void set_gameover_display(void) {
         
-        cls();              // Clear the screen before writing new text
 
-        gotoxy(screen_center_x/2-4, 1);  // Position at top of screen
-        printf("GameOver");
+       
 
         char buffer[10];
         sprintf(buffer, "%d", score);
@@ -127,9 +155,10 @@ void set_gameover_display(void) {
 
 }
 
+uint8_t blink_state = 0;
 void update_game_display(void) {
 
-        write_score(score);
+        write_score();
 
         uint8_t cursor_angle = get_cursor_angle();  
         Cursor.x = screen_center_x +  cos_table[cursor_angle]*7/10;
@@ -142,13 +171,23 @@ void update_game_display(void) {
             AtomSprites[i].y = screen_center_y + sin_table[atom_angle[i]]*atom_radius[i]/100;
             move_sprite(i, AtomSprites[i].x, AtomSprites[i].y);
 
+            // // only if plus or minus atom
+            // if (atom_values[i]==PLUS_ATOM || atom_values[i]==MINUS_ATOM) {
+
+            //     if (blink_state/5==5 || blink_state/5==10 ) {
+            //         set_sprite_prop(i, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
+            //     } else {
+            //         set_sprite_prop(i, S_PRIORITY);  // Use OBP1
+            //     }
+
+            // blink_state +=1;
+            // blink_state %= 200;
+            // }
+
+
         }
     
-        // Update sprite positions on screen
-        for(uint8_t i = 0; i < numberOfAtoms; i++) {
-            move_sprite(i, AtomSprites[i].x, AtomSprites[i].y);
-        }
-
+      
         move_sprite(MAX_ATOMS, MiddleAtom.x, MiddleAtom.y);
         move_sprite(MAX_ATOMS+1, Cursor.x, Cursor.y);
 
@@ -171,8 +210,7 @@ void init_title_display(void) {
     move_sprite(MAX_ATOMS, 0, 0);
     move_sprite(MAX_ATOMS+1, 0, 0);
 
-    // Show background
-    SHOW_BKG;
+   
 
 
 }

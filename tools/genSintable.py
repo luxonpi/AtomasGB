@@ -7,7 +7,7 @@ def generate_trig_tables(resolution=100):
     
     # Calculate step size for angles
     step = 2 * math.pi / resolution
-    radius = 32
+    radius = 40
     
     # Generate values
     for i in range(resolution):

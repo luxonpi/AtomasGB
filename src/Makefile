@@ -10,7 +10,7 @@ BUILD_DIR = ../build
 BINS = $(BUILD_DIR)/atomas.gb
 
 # Add sound source files
-SRCS = atomas.c sound.c display.c game.c sintables.c
+SRCS = atomas.c sound.c display.c game.c sintables.c gamebg.c
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCS))
 
 # GBDK_DEBUG = ON
