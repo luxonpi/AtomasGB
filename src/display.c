@@ -11,6 +11,7 @@
 #include "game.h"
 #include "sintables.h"
 #include "gamebg.h"
+#include "gameover.h"
 // Place the background tiles into VRAM (set_bkg_data)  256 tiles
 // Showing the background  (set_bkg_tiles)
 
@@ -132,17 +133,18 @@ int min(int a, int b){
 void set_gameover_display(void) {
         
 
+       fill_bkg_rect(0, 0, 20, 18, 0xFF);  // Clear entire background
+
+
+    set_bkg_data(gameover_TILE_COUNT,11,NumberTiles);
+    set_bkg_data(0,gameover_TILE_COUNT,gameover_tiles);
+
+    set_bkg_tiles(0,0,20,18,gameover_map);
+
+
+    write_score();
+
        
-
-        char buffer[10];
-        sprintf(buffer, "%d", score);
-
-        int score_width = strlen(buffer);
-        int total_width = score_width;
-        int start_x = (screen_center_x - total_width) / 2; 
-
-        gotoxy(start_x, 2);  // Position at top of screen
-        printf("%d", score);
     
         // Update sprite positions on screen
         for(uint8_t i = 0; i < 20; i++) {
@@ -170,6 +172,21 @@ void update_game_display(void) {
             AtomSprites[i].x = screen_center_x + cos_table[atom_angle[i]]*atom_radius[i]/100;
             AtomSprites[i].y = screen_center_y + sin_table[atom_angle[i]]*atom_radius[i]/100;
             move_sprite(i, AtomSprites[i].x, AtomSprites[i].y);
+
+            if(i==reaction_pos || (center_atom_value==MINUS_ATOM && i==cursor_position)){
+
+                if (blink_state%3 == 0) {
+                    set_sprite_prop(i, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
+                } else {
+                    set_sprite_prop(i, S_PRIORITY);  // Use OBP1
+                }
+
+            blink_state +=1;
+            blink_state %= 100;
+
+            } else {
+                set_sprite_prop(i, S_PRIORITY);  // Use OBP1
+            }
 
             // // only if plus or minus atom
             // if (atom_values[i]==PLUS_ATOM || atom_values[i]==MINUS_ATOM) {

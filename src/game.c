@@ -13,21 +13,31 @@ uint8_t numberOfAtoms = INITIAL_ATOMS;
 int8_t atom_values[MAX_ATOMS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uint8_t atom_angle[MAX_ATOMS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uint8_t atom_target_angle[MAX_ATOMS] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-
 uint8_t atom_radius[MAX_ATOMS] = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+uint8_t atom_target_radius[MAX_ATOMS] = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
 
 uint8_t cursor_position = 0;
+uint8_t moves_whithout_plus = 0;
+uint8_t moves_whithout_minus = 0;
 
 uint8_t center_atom_value = 0;
 uint8_t game_state = GAME_STATE_TITLE;
 uint8_t game_substate = GAME_SUBSTATE_INPUT;
 
+// Add these variables at the top with other global variables
+uint8_t atoms_to_middle_index = 0;
+uint8_t atoms_to_middle_timer = 0;
+int8_t reaction_pos=0;
+
+// Add at the top with other global variables
+uint8_t minus_absorb_position = 0;
 
 void init_game(void) {
     uint16_t seed = LY_REG;
     seed |= (uint16_t)DIV_REG << 8;
     initrand(seed);
+
+    reaction_pos=-1;
 
     score = 0;
     highscore = 0;
@@ -36,6 +46,7 @@ void init_game(void) {
     for(uint8_t i = 0; i < numberOfAtoms; i++) {
         atom_values[i] = rand() % 3; 
         atom_radius[i] = 0;
+        atom_target_radius[i] = 100;
     }
 
     update_atoms_angle(0, 0);
@@ -47,20 +58,35 @@ void init_game(void) {
 
 }
 
-void spawn_center_atom(void) {
+void absorb_atom(uint8_t position){
 
-
-    if(rand() % 5 == 0) {
-        center_atom_value = PLUS_ATOM;
-    } else if(rand() % 20 == 1) {
-        center_atom_value = MINUS_ATOM;
-    } else {
-        center_atom_value = rand() % 3;
-    }
+    minus_absorb_position = position;
+    atom_target_radius[minus_absorb_position] = 0;
+    game_substate = GAME_SUBSTATE_MINUS_ABSORB;
 
 }
 
-int8_t reaction_pos=0;
+void spawn_center_atom(void) {
+
+    moves_whithout_minus++;
+    moves_whithout_plus++;
+
+
+    if(rand() % 5 == 0 || moves_whithout_plus >= 5) {
+
+        center_atom_value = PLUS_ATOM;
+        moves_whithout_plus=0;
+
+    } else if(moves_whithout_minus>=20) {
+        center_atom_value = MINUS_ATOM;
+        moves_whithout_minus=0;
+    } else {
+        center_atom_value = rand() % 3;
+    }
+    
+
+}
+
 
 uint8_t check_reactions(void){
 
@@ -69,7 +95,7 @@ uint8_t check_reactions(void){
     // check if any two atoms are touching
     for(uint8_t i = 0; i < numberOfAtoms; i++) {
 
-        if (atom_values[i]==PLUS_ATOM) {
+        if (atom_values[i]==PLUS_ATOM || reaction_pos==i) {
 
             // Get left and right atom
             int8_t left_atom = (i-1);
@@ -108,11 +134,13 @@ void insert_atom(uint8_t position, uint8_t value, uint8_t angle){
         atom_angle[i] = atom_angle[i-1];
         atom_target_angle[i] = atom_target_angle[i-1];
         atom_radius[i] = atom_radius[i-1];
+        atom_target_radius[i] = atom_target_radius[i-1];
     }
 
     // insert the new atom
     atom_values[adjusted_position] = value;
     atom_radius[adjusted_position] = 0;
+    atom_target_radius[adjusted_position] = 100;
     atom_angle[adjusted_position] = angle;
     atom_target_angle[adjusted_position] = angle;
 
@@ -130,15 +158,21 @@ void update_game(){
 
     uint8_t animation_done = 1;
 
-    // increase radius of all atoms until they are 100
+    // Animate radius towards target
     for(uint8_t i = 0; i < numberOfAtoms; i++) {
-        
-        atom_radius[i]+=10;
-        if(atom_radius[i] > 100) {
-            atom_radius[i] = 100;
+        if(atom_radius[i] < atom_target_radius[i]) {
+            atom_radius[i] += 10;
+            if(atom_radius[i] > atom_target_radius[i]) {
+                atom_radius[i] = atom_target_radius[i];
+            }
+        } else if(atom_radius[i] > atom_target_radius[i]) {
+            atom_radius[i] -= 20;
+            if(atom_radius[i] < atom_target_radius[i]) {
+                atom_radius[i] = atom_target_radius[i];
+            }
         }
 
-        if(atom_radius[i]!=100) animation_done = 0;
+        if(atom_radius[i] != atom_target_radius[i]) animation_done = 0;
     }
 
     // animated atom angle, angles are from 0 to 99
@@ -170,6 +204,7 @@ void update_game(){
             game_substate = GAME_SUBSTATE_REACTION_ANIMATION;
         } else {
             game_substate = GAME_SUBSTATE_INPUT;
+            reaction_pos=-1;
         }
 
     }else if(game_substate == GAME_SUBSTATE_REACTION_ANIMATION && animation_done==1){
@@ -185,6 +220,7 @@ void update_game(){
             atom_angle[j-2] = atom_angle[j];
             atom_target_angle[j-2] = atom_target_angle[j];
             atom_radius[j-2] = atom_radius[j];
+            atom_target_radius[j-2] = atom_target_radius[j];
         }
 
         numberOfAtoms -= 2;
@@ -194,9 +230,48 @@ void update_game(){
         game_substate = GAME_SUBSTATE_INSERT_ANIMATION;
         update_sprites();
 
+    }else if(game_substate == GAME_SUBSTATE_MINUS_ABSORB && animation_done==1) {
+        // Store the absorbed atom's value
+        uint8_t absorbed_value = atom_values[minus_absorb_position];
+        
+        // Shift remaining atoms to the left
+        for(uint8_t i = minus_absorb_position; i < numberOfAtoms - 1; i++) {
+            atom_values[i] = atom_values[i + 1];
+            atom_angle[i] = atom_angle[i + 1];
+            atom_target_angle[i] = atom_target_angle[i + 1];
+            atom_radius[i] = atom_radius[i + 1];
+            atom_target_radius[i] = atom_target_radius[i + 1];
+        }
+        
+        numberOfAtoms--;
+        
+        // Update angles for remaining atoms
+        update_atoms_angle(minus_absorb_position, atom_angle[minus_absorb_position]);
+        
+        // Set center atom to absorbed value
+        center_atom_value = absorbed_value;
+        
+        // Return to input state
+        game_substate = GAME_SUBSTATE_INPUT;
+        update_sprites();
+    }else if(game_substate == GAME_SUBSTATE_ATOMS_TO_MIDDLE) {
+        // Wait a bit between each atom
+        if(atoms_to_middle_timer++ >= 10) {
+            atoms_to_middle_timer = 0;
+            
+            if(atoms_to_middle_index < numberOfAtoms) {
+                // Add current atom's value to score
+                score += atom_values[atoms_to_middle_index];
+                // Move atom to center by reducing target radius
+                atom_target_radius[atoms_to_middle_index] = 0;
+                atoms_to_middle_index++;
+            } else if(animation_done) {
+                // All atoms have reached center, transition to game over
+                game_state = GAME_STATE_GAME_OVER;
+                set_gameover_display();
+            }
+        }
     }
-
-
 }
 
 void update_atoms_angle(uint8_t position, uint8_t pivot_angle){

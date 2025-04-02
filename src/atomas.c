@@ -78,10 +78,10 @@ void main(void){
                 spawn_center_atom();
                 update_sprites();
 
-                // Check if number of atomas is 20
+                // Check if number of atoms is 20
                 if(numberOfAtoms >= 20){
-                    game_state = GAME_STATE_GAME_OVER;
-                    set_gameover_display();
+                    game_substate = GAME_SUBSTATE_ATOMS_TO_MIDDLE;
+                    
                 }
 
             }
@@ -94,7 +94,19 @@ void main(void){
                 cursor_position = (cursor_position + 1) % numberOfAtoms;
             }
 
-         
+            if(game_substate == GAME_SUBSTATE_INPUT) {
+                if(joypad() & J_B) {
+                    if(center_atom_value == MINUS_ATOM) {
+                        // Start minus atom absorption animation
+                        absorb_atom(cursor_position);
+                    } else {
+                        // Normal atom insertion
+                        insert_atom(cursor_position, center_atom_value, atom_angle[cursor_position]);
+                        spawn_center_atom();
+                    }
+                }
+            }
+
         }
 
         if(game_state == GAME_STATE_GAME_OVER){
