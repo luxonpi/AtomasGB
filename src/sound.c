@@ -57,8 +57,6 @@ void init_sound(void) {
 }
 
 
-
-
 void start_music(void) {
     NR52_REG = 0x80;
     note_timer = 0;
@@ -82,8 +80,6 @@ void update_background_music(void) {
 void stop_music(void) {
     NR52_REG = 0x00;
 }
-
-
 
 
 void play_note(uint16_t frequency) {

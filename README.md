@@ -6,6 +6,8 @@ Game Boy version of Atomas
 
 ![Title Screen](res/titlescreen.png)
 
+![Game](res/game.gif)
+
 ## Compilation  
 
 To compile the game, use [GBDK-2020](https://github.com/gbdk-2020/gbdk-2020).  
