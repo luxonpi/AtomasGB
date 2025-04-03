@@ -15,11 +15,12 @@
 #define GAME_SUBSTATE_REACTION_ANIMATION 3
 #define GAME_SUBSTATE_ATOMS_TO_MIDDLE 4
 #define GAME_SUBSTATE_MINUS_ABSORB 5
+#define GAME_SUBSTATE_MINUS_ABSORB_ANIMATION 6
+#define GAME_SUBSTATE_ATOM_ABSORBED 7
 
 // Atom configuration
-#define INITIAL_ATOMS 5
+#define INITIAL_ATOMS 10
 #define MAX_ATOMS 20
-#define HIGHEST_ATOM_NUMBER 3
 
 // Special atom types
 #define PLUS_ATOM 120
@@ -41,7 +42,7 @@ extern uint8_t game_substate;
 extern int8_t reaction_pos;
 
 // Function declarations
-void init_game(void);
+void start_new_game(void);
 void save_highscore(uint8_t score);
 void load_highscore(void);
 void spawn_center_atom(void);

@@ -1,6 +1,4 @@
 #include <gb/gb.h>
-#include <gbdk/font.h>
-#include <gbdk/console.h> 
 #include <stdint.h>
 #include <stdio.h>  
 #include <string.h> 
@@ -16,11 +14,27 @@
 // Showing the background  (set_bkg_tiles)
 
 
-// Define the global variables here
+// Sprite Variables
 struct Sprite AtomSprites[20];
-struct Sprite MiddleAtom;
+struct Sprite CenterAtom;
 struct Sprite Cursor;
-uint8_t frame_counter = 2;
+
+void show_titlescreen(void) {
+
+    // Set Background
+    set_bkg_data(0, sizeof(titlescreen_tiles) / 16, titlescreen_tiles);
+    set_bkg_tiles(0, 0, 20, 18, (unsigned char *) titlescreen_map);
+
+    // Hide Sprites
+    for(uint8_t i = 0; i < MAX_ATOMS; i++) {
+        move_sprite(i, 0, 0);
+    }
+    move_sprite(MAX_ATOMS, 0, 0);
+    move_sprite(MAX_ATOMS+1, 0, 0);
+
+}
+
+
 
 
 uint8_t getTileID(uint8_t value){
@@ -45,67 +59,58 @@ uint8_t GetCharacterVRamTile(char character) {
 void write_score(){
 
     char buffer[10];
-    sprintf(buffer, "%d", score);
-
+    sprintf(buffer, "%d", score);  // Convert score to string
     int score_width = strlen(buffer);
     int total_width = score_width;
     int start_x = (screen_center_x - total_width) / 2; 
 
-  
     // Get the address of the first tile in the row
     uint8_t* vramAddress = get_bkg_xy_addr(start_x,1);
-    uint16_t index=0;
-
-    while(buffer[index]!='\0'){
-
-        char character = buffer[index];
-
-        // Draw our character at the address
-        // THEN, increment the address
-        uint8_t vramTile = GetCharacterVRamTile(character);
-        set_vram_byte(vramAddress++,vramTile);
-        index++;
+    
+    // First, clear all tiles in the score area to white
+    for(int i = 0; i < 10; i++) {
+        set_vram_byte(vramAddress + i, 0xFF);  // Set to white tile
     }
 
+    // Then write the score
+    uint16_t index = 0;
+    while(buffer[index] != '\0') {
+        char character = buffer[index];
+        uint8_t vramTile = GetCharacterVRamTile(character);
+        set_vram_byte(vramAddress++, vramTile);
+        index++;
+    }
 }
 
-void init_game_display(void) {
+void show_gamescreen(void) {
     
-    // Set background to white
-
-
+    // Set Background and font tiles
     fill_bkg_rect(0, 0, 20, 18, 0xFF);  // Clear entire background
-
-
     set_bkg_data(gamebg_TILE_COUNT,11,NumberTiles);
     set_bkg_data(0,gamebg_TILE_COUNT,gamebg_tiles);
-
     set_bkg_tiles(0,0,20,18,gamebg_map);
 
-
+    // Write Score
     write_score();
   
-  
-    set_sprite_data(0, 7, SpriteTiles);
+    // Set Sprite Tiles
+    set_sprite_data(0, SPRITE_TILE_COUNT, SpriteTiles);
     SHOW_SPRITES;
     
-    // Clear any existing text
-    
-    MiddleAtom.prop = 0;
-    set_sprite_prop(MAX_ATOMS, 0);
-    MiddleAtom.x = screen_center_x;
-    MiddleAtom.y = screen_center_y;
+    // Set Sprite Properties
+    CenterAtom.prop = 0;
+    CenterAtom.x = screen_center_x;
+    CenterAtom.y = screen_center_y;
 
     Cursor.x = screen_center_x;
     Cursor.y = screen_center_y;
     Cursor.tile = TILE_ID_CURSOR;     
     Cursor.prop = 0;
 
-    // Set the sprite's tile and properties
+    set_sprite_prop(MAX_ATOMS, 0);
     set_sprite_tile(MAX_ATOMS+1, Cursor.tile);
     set_sprite_prop(MAX_ATOMS+1, Cursor.prop);
 
-    
     update_sprites();
     update_game_display();
 }
@@ -122,8 +127,8 @@ void update_sprites(void) {
         move_sprite(i, 0, 0);  // Move unused sprites off-screen
     }
 
-    MiddleAtom.tile = getTileID(center_atom_value);     
-    set_sprite_tile(MAX_ATOMS, MiddleAtom.tile);
+    CenterAtom.tile = getTileID(center_atom_value);     
+    set_sprite_tile(MAX_ATOMS, CenterAtom.tile);
     
 }
 int min(int a, int b){
@@ -141,7 +146,7 @@ void set_gameover_display(void) {
 
     set_bkg_tiles(0,0,20,18,gameover_map);
 
-
+   
     write_score();
 
        
@@ -151,7 +156,7 @@ void set_gameover_display(void) {
             move_sprite(i, 0,0);
         }
 
-        move_sprite(MAX_ATOMS, MiddleAtom.x, MiddleAtom.y);
+        move_sprite(MAX_ATOMS, CenterAtom.x, CenterAtom.y);
         move_sprite(MAX_ATOMS+1, 0,0);
 
 
@@ -174,60 +179,37 @@ void update_game_display(void) {
             move_sprite(i, AtomSprites[i].x, AtomSprites[i].y);
 
             if(i==reaction_pos || (center_atom_value==MINUS_ATOM && i==cursor_position)){
-
                 if (blink_state%3 == 0) {
                     set_sprite_prop(i, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
                 } else {
                     set_sprite_prop(i, S_PRIORITY);  // Use OBP1
                 }
-
-            blink_state +=1;
-            blink_state %= 100;
-
+                blink_state +=1;
+                blink_state %= 100;
             } else {
                 set_sprite_prop(i, S_PRIORITY);  // Use OBP1
             }
-
-            // // only if plus or minus atom
-            // if (atom_values[i]==PLUS_ATOM || atom_values[i]==MINUS_ATOM) {
-
-            //     if (blink_state/5==5 || blink_state/5==10 ) {
-            //         set_sprite_prop(i, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
-            //     } else {
-            //         set_sprite_prop(i, S_PRIORITY);  // Use OBP1
-            //     }
-
-            // blink_state +=1;
-            // blink_state %= 200;
-            // }
-
-
         }
     
+        // Make cursor and center atom blink when an atom is absorbed and can be converted
+        if(game_substate == GAME_SUBSTATE_ATOM_ABSORBED) {
+            if (blink_state%2 == 0) {
+                set_sprite_prop(MAX_ATOMS+1, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
+                set_sprite_prop(MAX_ATOMS, S_PALETTE);    // Make center atom blink too
+            } else {
+                set_sprite_prop(MAX_ATOMS+1, S_PRIORITY);  // Use OBP1
+                set_sprite_prop(MAX_ATOMS, 0);    // Use OBP1
+            }
+            blink_state +=1;
+            blink_state %= 100;
+        } else {
+            set_sprite_prop(MAX_ATOMS+1, S_PRIORITY);  // Use OBP1
+            set_sprite_prop(MAX_ATOMS, 0);    // Normal visibility
+        }
       
-        move_sprite(MAX_ATOMS, MiddleAtom.x, MiddleAtom.y);
+        move_sprite(MAX_ATOMS, CenterAtom.x, CenterAtom.y);
         move_sprite(MAX_ATOMS+1, Cursor.x, Cursor.y);
-
-
 }
 
 
 
-
-void init_title_display(void) {
-
-    set_bkg_data(0, sizeof(titlescreen_tiles) / 16, titlescreen_tiles);
-    set_bkg_tiles(0, 0, 20, 18, (unsigned char *) titlescreen_map);
-
-    // Hide sprites
-    for(uint8_t i = 0; i < MAX_ATOMS; i++) {
-        move_sprite(i, 0, 0);
-    }
-
-    move_sprite(MAX_ATOMS, 0, 0);
-    move_sprite(MAX_ATOMS+1, 0, 0);
-
-   
-
-
-}

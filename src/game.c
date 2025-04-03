@@ -1,10 +1,11 @@
+#include <stdlib.h> 
+#include <rand.h>
+#include <gb/gb.h> 
+
 #include "game.h"
 #include "sintables.h"
-#include <gb/gb.h> 
-#include <stdlib.h> // For abs()
 #include "display.h"
-#include <rand.h>
-
+#include "sound.h"
 
 uint8_t highscore = 0;
 uint8_t score = 0;
@@ -27,17 +28,24 @@ uint8_t game_substate = GAME_SUBSTATE_INPUT;
 // Add these variables at the top with other global variables
 uint8_t atoms_to_middle_index = 0;
 uint8_t atoms_to_middle_timer = 0;
+
+// -1 means no reaction
 int8_t reaction_pos=0;
+int8_t maxReactionValue=-1;
 
 // Add at the top with other global variables
 uint8_t minus_absorb_position = 0;
+uint8_t consecutive_reactions = 0;  // Track number of consecutive reactions
 
-void init_game(void) {
+void start_new_game(void){
+
     uint16_t seed = LY_REG;
     seed |= (uint16_t)DIV_REG << 8;
     initrand(seed);
 
     reaction_pos=-1;
+    game_substate = GAME_SUBSTATE_INPUT;
+    consecutive_reactions = 0;  
 
     score = 0;
     highscore = 0;
@@ -63,6 +71,7 @@ void absorb_atom(uint8_t position){
     minus_absorb_position = position;
     atom_target_radius[minus_absorb_position] = 0;
     game_substate = GAME_SUBSTATE_MINUS_ABSORB;
+    play_absorb_atom_sound();
 
 }
 
@@ -71,17 +80,19 @@ void spawn_center_atom(void) {
     moves_whithout_minus++;
     moves_whithout_plus++;
 
-
     if(rand() % 5 == 0 || moves_whithout_plus >= 5) {
 
         center_atom_value = PLUS_ATOM;
         moves_whithout_plus=0;
 
     } else if(moves_whithout_minus>=20) {
+
         center_atom_value = MINUS_ATOM;
         moves_whithout_minus=0;
     } else {
+
         center_atom_value = rand() % 3;
+   
     }
     
 
@@ -205,13 +216,26 @@ void update_game(){
         } else {
             game_substate = GAME_SUBSTATE_INPUT;
             reaction_pos=-1;
+            consecutive_reactions = 0;  // Reset counter when no more reactions
+            maxReactionValue=-1;
         }
 
     }else if(game_substate == GAME_SUBSTATE_REACTION_ANIMATION && animation_done==1){
 
           // reaction
+
+        if(maxReactionValue!=-1 && atom_values[reaction_pos] < maxReactionValue){
+            atom_values[reaction_pos]= maxReactionValue;
+        }
+
         atom_values[reaction_pos] += 1;
         score += atom_values[reaction_pos];
+        
+        maxReactionValue = atom_values[reaction_pos];
+
+        // Play merge sound with increasing pitch based on consecutive reactions
+        consecutive_reactions++;
+        play_merge_atom_sound(consecutive_reactions);
         
         // 1 2 3 3 3 4 4 4 2 
         // plus atom and right atom are removed, shift all atoms to the left by two
@@ -251,9 +275,20 @@ void update_game(){
         // Set center atom to absorbed value
         center_atom_value = absorbed_value;
         
-        // Return to input state
-        game_substate = GAME_SUBSTATE_INPUT;
+        // Change to absorbed state where player can convert the atom
+        game_substate = GAME_SUBSTATE_ATOM_ABSORBED;
         update_sprites();
+        
+    }else if(game_substate == GAME_SUBSTATE_ATOM_ABSORBED) {
+        // Check for B button press to convert atom
+        uint8_t curr_joypad = joypad();
+        if(curr_joypad & J_B) {
+            // Convert the absorbed atom to a plus atom
+            center_atom_value = PLUS_ATOM;
+            play_convert_atom_sound();
+            game_substate = GAME_SUBSTATE_INPUT;
+            update_sprites();
+        }
     }else if(game_substate == GAME_SUBSTATE_ATOMS_TO_MIDDLE) {
         // Wait a bit between each atom
         if(atoms_to_middle_timer++ >= 10) {
@@ -269,6 +304,7 @@ void update_game(){
                 // All atoms have reached center, transition to game over
                 game_state = GAME_STATE_GAME_OVER;
                 set_gameover_display();
+                play_game_over_sound();
             }
         }
     }
@@ -287,8 +323,14 @@ uint8_t get_cursor_angle(){
 
     uint16_t angleSteps = 10000 / numberOfAtoms;
     int adjusted_position = (cursor_position) % numberOfAtoms;
+    
+    // If there's a minus atom in the middle, point directly to the selected atom
+    if(center_atom_value == MINUS_ATOM) {
+        return atom_target_angle[adjusted_position];
+    }
+    
+    // Otherwise, position between atoms
     return (atom_target_angle[adjusted_position]+angleSteps/200)%100;
-
 }
 
 

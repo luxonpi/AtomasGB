@@ -1,14 +1,6 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <stdint.h>
-
-// Tile IDs
-#define TILE_ID_CURSOR 0
-#define TILE_ID_PLUS 1
-#define TILE_ID_MINUS 2
-#define TILE_ID_HYDROGEN 3
-
 // Screen dimensions
 #define screenWidth 160 
 #define screenHeight 144
@@ -26,14 +18,13 @@ struct Sprite {
 
 // Declare variables as external
 extern struct Sprite AtomSprites[20];
-extern struct Sprite MiddleAtom;
+extern struct Sprite CenterAtom;
 extern struct Sprite Cursor;
-extern uint8_t frame_counter;
 
 
 // Function declarations
-void init_title_display(void);
-void init_game_display(void);
+void show_titlescreen(void);
+void show_gamescreen(void);
 void update_sprites(void);
 
 #endif 

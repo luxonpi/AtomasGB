@@ -1,9 +1,9 @@
-#include <gb/gb.h>
-#include <gbdk/font.h>
-#include <gbdk/console.h> 
 #include <stdint.h>
 #include <stdio.h>  
 #include <string.h>  
+#include <gb/gb.h>
+#include <gbdk/font.h>
+
 #include "sintables.h"
 #include "sound.h"
 #include "game.h"
@@ -11,23 +11,22 @@
 
 void main(void){
 
-    // Disable interrupts and turn off display
+    // Initialize
     disable_interrupts();
     DISPLAY_ON;
     SHOW_BKG;
-
     LCDC_REG = LCDCF_OFF | LCDCF_OBJ8 | LCDCF_OBJON | LCDCF_BGON;
     OBP0_REG = 0xE4;
-
     font_init();                  // Initialize the font system
-    font_set(font_load(font_ibm)); // Load the built-in IBM font
-    init_title_display();
+
+    show_titlescreen();
     init_sound();
 
+    
      // Store previous joypad state
     static uint8_t prev_joypad = 0;
       
-    // ------------------ Main loop -------------------------------
+    // ------------------ Main loop ----------------------------// 
     while(1) {
 
         uint8_t curr_joypad = joypad();
@@ -42,10 +41,10 @@ void main(void){
             
                 game_state = GAME_STATE_GAME;
                 play_transition_sound();
-                init_game();
-                init_game_display();
+                start_new_game();
+                show_gamescreen();
                 stop_music();
-                init_sound();
+               
                         
             }
    
@@ -55,10 +54,8 @@ void main(void){
             if ((curr_joypad & J_SELECT) && !(prev_joypad & J_SELECT)) {
                 game_state = GAME_STATE_TITLE;
                 play_transition_sound();
-                init_title_display();
-                init_sound();
-                current_note = 0;
-                note_timer = 0;
+                show_titlescreen();
+                start_music();
             }
 
         }
@@ -73,10 +70,21 @@ void main(void){
             // if a is pressed, insert an atom
             if((curr_joypad & J_A) && !(prev_joypad & J_A) && game_substate == GAME_SUBSTATE_INPUT){
                
-                play_add_atom_sound();
-                insert_atom(cursor_position, center_atom_value, get_cursor_angle());
-                spawn_center_atom();
-                update_sprites();
+            
+                if(center_atom_value == MINUS_ATOM) {
+                    // Start minus atom absorption animation
+                    play_add_atom_sound();
+                    absorb_atom(cursor_position);
+                    update_sprites();
+
+                } else {
+
+                    play_add_atom_sound();
+                    insert_atom(cursor_position, center_atom_value, get_cursor_angle());
+                    spawn_center_atom();
+                    update_sprites();
+                }
+
 
                 // Check if number of atoms is 20
                 if(numberOfAtoms >= 20){
@@ -94,19 +102,7 @@ void main(void){
                 cursor_position = (cursor_position + 1) % numberOfAtoms;
             }
 
-            if(game_substate == GAME_SUBSTATE_INPUT) {
-                if(joypad() & J_B) {
-                    if(center_atom_value == MINUS_ATOM) {
-                        // Start minus atom absorption animation
-                        absorb_atom(cursor_position);
-                    } else {
-                        // Normal atom insertion
-                        insert_atom(cursor_position, center_atom_value, atom_angle[cursor_position]);
-                        spawn_center_atom();
-                    }
-                }
-            }
-
+            
         }
 
         if(game_state == GAME_STATE_GAME_OVER){
@@ -114,10 +110,9 @@ void main(void){
             if((curr_joypad & J_START) && !(prev_joypad & J_START)){
                 game_state = GAME_STATE_TITLE;
                 play_transition_sound();
-                init_title_display();
-                init_sound();
-                current_note = 0;
-                note_timer = 0;
+                show_titlescreen();
+                start_music();
+
             }
 
         }
@@ -126,4 +121,6 @@ void main(void){
         prev_joypad = curr_joypad;
         vsync();
     }
+
+
 }

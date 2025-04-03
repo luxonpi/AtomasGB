@@ -1,4 +1,22 @@
 #include "sound.h"
+#include <gb/gb.h>
+#include <stdint.h>
+
+// Note frequencies
+#define C4 256
+#define D4 288
+#define E4 320
+#define F4 341
+#define G4 384
+#define A4 427
+#define B4 480
+#define C5 512
+#define REST 0
+
+#define song_length 40
+uint8_t note_duration = 15;  // Slightly faster tempo
+uint8_t note_timer = 0;
+uint8_t current_note = 0;
 
 // Mysterious melody pattern
 const uint16_t melody[] = {
@@ -25,12 +43,9 @@ const uint8_t drum_pattern[] = {
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
-    1, 0, 0, 0
+    1, 0, 0, 1
 };
 
-uint8_t note_duration = 15;  // Slightly faster tempo
-uint8_t note_timer = 0;
-uint8_t current_note = 0;
 
 void init_sound(void) {
     // Turn on sound
@@ -40,6 +55,36 @@ void init_sound(void) {
     // Set max volume for both channels
     NR50_REG = 0x77;
 }
+
+
+
+
+void start_music(void) {
+    NR52_REG = 0x80;
+    note_timer = 0;
+    current_note = 0;
+}
+
+
+void update_background_music(void) {
+    if (note_timer++ >= note_duration) {
+        note_timer = 0;
+        if (melody[current_note] != REST) {
+            play_note(melody[current_note]);
+        }
+        if (drum_pattern[current_note]) {
+            play_drum();
+        }
+        current_note = (current_note + 1) % song_length;
+    }
+} 
+
+void stop_music(void) {
+    NR52_REG = 0x00;
+}
+
+
+
 
 void play_note(uint16_t frequency) {
     if (frequency == REST) return;
@@ -76,19 +121,40 @@ void play_add_atom_sound(void) {
     NR44_REG = 0x80;    // Initialize
 }
 
-void update_background_music(void) {
-    if (note_timer++ >= note_duration) {
-        note_timer = 0;
-        if (melody[current_note] != REST) {
-            play_note(melody[current_note]);
-        }
-        if (drum_pattern[current_note]) {
-            play_drum();
-        }
-        current_note = (current_note + 1) % song_length;
-    }
-} 
-
-void stop_music(void) {
-    NR52_REG = 0x00;
+void play_merge_atom_sound(uint8_t merge_count) {
+    // Play a note that increases in pitch with each merge
+    uint16_t base_freq = C4;
+    // Increase pitch by 12.5% for each merge (using integer arithmetic)
+    uint16_t freq = base_freq - ((base_freq * merge_count) >> 3);
+    play_note(freq);
 }
+
+void play_game_over_sound(void) {
+    // Play a descending arpeggio for game over
+    play_note(C5);
+    delay(50);
+    play_note(G4);
+    delay(50);
+    play_note(E4);
+    delay(50);
+    play_note(C4);
+}
+
+void play_absorb_atom_sound(void) {
+    // Play a quick descending note for absorption
+    NR10_REG = 0x00;    // No sweep
+    NR11_REG = 0x80;    // 50% duty cycle
+    NR12_REG = 0x83;    // Volume = 8, fade down slower
+    NR13_REG = (uint8_t)(2048 - (C4 + 64));  // Start slightly higher than C4
+    NR14_REG = 0x86;    // Frequency MSB + Initialize
+}
+
+void play_convert_atom_sound(void) {
+    // Play a rising arpeggio for conversion
+    play_note(C4);
+    delay(30);
+    play_note(E4);
+    delay(30);
+    play_note(G4);
+}
+

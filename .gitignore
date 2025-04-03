@@ -20,3 +20,4 @@ licenses
 *.ihx
 
 .DS_Store
+.vscode/settings.json
