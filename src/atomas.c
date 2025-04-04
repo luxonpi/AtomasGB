@@ -67,8 +67,17 @@ void main(void){
             update_game();
             update_game_display();
 
+            if(game_substate == GAME_SUBSTATE_ATOM_ABSORBED && (curr_joypad & J_B) && !(prev_joypad & J_B)){
+               
+                // Convert the absorbed atom to a plus atom
+                center_atom_value = PLUS_ATOM;
+                play_convert_atom_sound();
+                game_substate = GAME_SUBSTATE_INPUT;
+                update_sprites();
+                
+            }
             // if a is pressed, insert an atom
-            if((curr_joypad & J_A) && !(prev_joypad & J_A) && game_substate == GAME_SUBSTATE_INPUT){
+            else if((curr_joypad & J_A) && !(prev_joypad & J_A) && (game_substate == GAME_SUBSTATE_INPUT || game_substate == GAME_SUBSTATE_ATOM_ABSORBED)){
                
             
                 if(center_atom_value == MINUS_ATOM) {

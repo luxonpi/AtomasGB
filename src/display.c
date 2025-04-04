@@ -10,6 +10,7 @@
 #include "sintables.h"
 #include "gamebg.h"
 #include "gameover.h"
+#include "element_names.h"
 // Place the background tiles into VRAM (set_bkg_data)  256 tiles
 // Showing the background  (set_bkg_tiles)
 
@@ -52,6 +53,8 @@ uint8_t getTileID(uint8_t value){
 uint8_t GetCharacterVRamTile(char character) {
 
     if(character >= '0'&&character <= '9') return (character-'0')+gamebg_TILE_COUNT;   
+    if(character >= 'A'&&character <= 'Z') return (character-'A')+gamebg_TILE_COUNT+10;
+    if(character >= 'a'&&character <= 'z') return (character-'a')+gamebg_TILE_COUNT+10;
     return 0;
 
 }
@@ -80,13 +83,44 @@ void write_score(){
         set_vram_byte(vramAddress++, vramTile);
         index++;
     }
+
+
+    // Write the highest atom name
+
+    char* highest_atom_name = ElementNames[highest_atom_number%HIGHEST_ATOM_NUMBER];
+    
+    // Calculate text length
+    int text_length = 0;
+    while(highest_atom_name[text_length] != '\0') {
+        text_length++;
+    }
+    
+    // Calculate starting position to center the text
+    start_x = (20 - text_length) / 2;  // 20 is the screen width in tiles
+    
+    vramAddress = get_bkg_xy_addr(start_x,1);
+    
+    // First, clear all tiles in the score area to white
+    for(int i = 5; i < 15; i++) {  // Changed to 20 to clear full width
+        set_vram_byte(get_bkg_xy_addr(i,1), 0xFF);  // Set to white tile
+    }
+
+    // Then write the score
+    index = 0;
+    while(highest_atom_name[index] != '\0') {
+        char character = highest_atom_name[index];
+        uint8_t vramTile = GetCharacterVRamTile(character);
+        set_vram_byte(vramAddress++, vramTile);
+        index++;
+    }
+
 }
 
 void show_gamescreen(void) {
     
     // Set Background and font tiles
     fill_bkg_rect(0, 0, 20, 18, 0xFF);  // Clear entire background
-    set_bkg_data(gamebg_TILE_COUNT,11,NumberTiles);
+    set_bkg_data(gamebg_TILE_COUNT,11+26,NumberTiles);
     set_bkg_data(0,gamebg_TILE_COUNT,gamebg_tiles);
     set_bkg_tiles(0,0,20,18,gamebg_map);
 

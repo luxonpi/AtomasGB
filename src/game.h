@@ -31,6 +31,7 @@ extern uint8_t highscore;
 extern uint8_t score;
 extern uint8_t numberOfAtoms;
 
+
 extern uint8_t atom_radius[MAX_ATOMS];
 extern uint8_t atom_angle[MAX_ATOMS];
 extern int8_t atom_values[MAX_ATOMS];
@@ -40,6 +41,7 @@ extern uint8_t center_atom_value;
 extern uint8_t game_state;
 extern uint8_t game_substate;
 extern int8_t reaction_pos;
+extern uint8_t highest_atom_number;
 
 // Function declarations
 void start_new_game(void);

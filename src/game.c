@@ -20,6 +20,11 @@ uint8_t atom_target_radius[MAX_ATOMS] = {100, 100, 100, 100, 100, 100, 100, 100,
 uint8_t cursor_position = 0;
 uint8_t moves_whithout_plus = 0;
 uint8_t moves_whithout_minus = 0;
+uint8_t moves_count = 0;
+uint8_t highest_atom_number = 0;
+
+uint8_t lowestValue = 1;
+uint8_t valueRange = 3;
 
 uint8_t center_atom_value = 0;
 uint8_t game_state = GAME_STATE_TITLE;
@@ -46,6 +51,14 @@ void start_new_game(void){
     reaction_pos=-1;
     game_substate = GAME_SUBSTATE_INPUT;
     consecutive_reactions = 0;  
+    highest_atom_number = 0;
+
+    moves_count = 0;
+    moves_whithout_minus = 0;
+    moves_whithout_plus = 0;
+    lowestValue = 1;
+    valueRange = 3;
+
 
     score = 0;
     highscore = 0;
@@ -53,6 +66,8 @@ void start_new_game(void){
 
     for(uint8_t i = 0; i < numberOfAtoms; i++) {
         atom_values[i] = rand() % 3; 
+        if(atom_values[i] > highest_atom_number && atom_values[i] < 118) highest_atom_number = atom_values[i];
+
         atom_radius[i] = 0;
         atom_target_radius[i] = 100;
     }
@@ -62,6 +77,28 @@ void start_new_game(void){
     // set angle to target angle
     for(uint8_t i = 0; i < numberOfAtoms; i++) {
         atom_angle[i] = atom_target_angle[i];
+    }
+
+}
+
+void end_move(void){
+
+    moves_count++;
+    moves_whithout_minus++;
+    moves_whithout_plus++;
+
+     if (moves_count % 30 == 0)
+    {
+
+        lowestValue++;
+
+    }
+
+    if ((moves_count + 250) % 300 == 0)
+    {
+
+        valueRange++;
+
     }
 
 }
@@ -80,7 +117,10 @@ void spawn_center_atom(void) {
     moves_whithout_minus++;
     moves_whithout_plus++;
 
-    if(rand() % 5 == 0 || moves_whithout_plus >= 5) {
+    uint8_t randomAtom = 0;
+    if(numberOfAtoms>0) randomAtom = rand() % numberOfAtoms;
+
+    if(rand() % 15 == 0 || moves_whithout_plus >= 5) {
 
         center_atom_value = PLUS_ATOM;
         moves_whithout_plus=0;
@@ -89,11 +129,18 @@ void spawn_center_atom(void) {
 
         center_atom_value = MINUS_ATOM;
         moves_whithout_minus=0;
-    } else {
 
-        center_atom_value = rand() % 3;
+    } else if(atom_values[randomAtom] < lowestValue && rand() % 2 == 0){
+
+        center_atom_value = atom_values[randomAtom];
+
+    }else {
+
+        center_atom_value = rand() % valueRange + lowestValue;
    
     }
+
+    if(center_atom_value > highest_atom_number && center_atom_value < 118) highest_atom_number = center_atom_value;
     
 
 }
@@ -113,7 +160,7 @@ uint8_t check_reactions(void){
             int8_t right_atom = (i+1) % numberOfAtoms;
             if (left_atom<0) left_atom = numberOfAtoms-1;
 
-            if (atom_values[left_atom]==atom_values[right_atom]) {
+            if (atom_values[left_atom]==atom_values[right_atom] && atom_values[left_atom]!=PLUS_ATOM && atom_values[left_atom]!=MINUS_ATOM) {
 
                 uint8_t plus_angle = atom_angle[i] ;
 
@@ -218,6 +265,7 @@ void update_game(){
             reaction_pos=-1;
             consecutive_reactions = 0;  // Reset counter when no more reactions
             maxReactionValue=-1;
+            end_move();
         }
 
     }else if(game_substate == GAME_SUBSTATE_REACTION_ANIMATION && animation_done==1){
@@ -230,6 +278,8 @@ void update_game(){
 
         atom_values[reaction_pos] += 1;
         score += atom_values[reaction_pos];
+
+        if(atom_values[reaction_pos] > highest_atom_number && atom_values[reaction_pos] < 118) highest_atom_number = atom_values[reaction_pos];
         
         maxReactionValue = atom_values[reaction_pos];
 
@@ -279,19 +329,9 @@ void update_game(){
         game_substate = GAME_SUBSTATE_ATOM_ABSORBED;
         update_sprites();
         
-    }else if(game_substate == GAME_SUBSTATE_ATOM_ABSORBED) {
-        // Check for B button press to convert atom
-        uint8_t curr_joypad = joypad();
-        if(curr_joypad & J_B) {
-            // Convert the absorbed atom to a plus atom
-            center_atom_value = PLUS_ATOM;
-            play_convert_atom_sound();
-            game_substate = GAME_SUBSTATE_INPUT;
-            update_sprites();
-        }
     }else if(game_substate == GAME_SUBSTATE_ATOMS_TO_MIDDLE) {
         // Wait a bit between each atom
-        if(atoms_to_middle_timer++ >= 10) {
+        if(atoms_to_middle_timer++ >= 2) {
             atoms_to_middle_timer = 0;
             
             if(atoms_to_middle_index < numberOfAtoms) {
