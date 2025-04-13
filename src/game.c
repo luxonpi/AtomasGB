@@ -108,7 +108,7 @@ void absorb_atom(uint8_t position){
     minus_absorb_position = position;
     atom_target_radius[minus_absorb_position] = 0;
     game_substate = GAME_SUBSTATE_MINUS_ABSORB;
-    play_absorb_atom_sound();
+    play_sound(ABSORB);
 
 }
 
@@ -344,7 +344,7 @@ void update_game(){
                 // All atoms have reached center, transition to game over
                 game_state = GAME_STATE_GAME_OVER;
                 set_gameover_display();
-                play_game_over_sound();
+                play_sound(GAMEOVER);
             }
         }
     }

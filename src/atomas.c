@@ -11,17 +11,17 @@
 
 void main(void){
 
-    // Initialize
+    // Initialize //
     disable_interrupts();
-    DISPLAY_ON;
-    SHOW_BKG;
-    LCDC_REG = LCDCF_OFF | LCDCF_OBJ8 | LCDCF_OBJON | LCDCF_BGON;
+    LCDC_REG = LCDCF_ON | LCDCF_OBJON | LCDCF_BGON;
+    SPRITES_8x8;
+
     OBP0_REG = 0xE4;
-    font_init();                  // Initialize the font system
+    BGP_REG = OBP0_REG = OBP1_REG = 0xE4;
+    enable_interrupts();
 
-    show_titlescreen();
     init_sound();
-
+    show_titlescreen();
     
      // Store previous joypad state
     static uint8_t prev_joypad = 0;
@@ -36,11 +36,14 @@ void main(void){
             // Update music
             update_background_music();
 
+            // Update particles
+            update_titlescreen_particles();
+
             // Start game with start button
             if ((curr_joypad & J_START) && !(prev_joypad & J_START)) {
             
                 game_state = GAME_STATE_GAME;
-                play_transition_sound();
+                play_sound(START);
                 start_new_game();
                 show_gamescreen();
                 stop_music();
@@ -53,7 +56,7 @@ void main(void){
             // Select button to go to title screen
             if ((curr_joypad & J_SELECT) && !(prev_joypad & J_SELECT)) {
                 game_state = GAME_STATE_TITLE;
-                play_transition_sound();
+                play_sound(START);
                 show_titlescreen();
                 start_music();
             }
@@ -71,7 +74,7 @@ void main(void){
                
                 // Convert the absorbed atom to a plus atom
                 center_atom_value = PLUS_ATOM;
-                play_convert_atom_sound();
+                play_sound(COVERT);
                 game_substate = GAME_SUBSTATE_INPUT;
                 update_sprites();
                 
@@ -82,13 +85,13 @@ void main(void){
             
                 if(center_atom_value == MINUS_ATOM) {
                     // Start minus atom absorption animation
-                    play_add_atom_sound();
+                    play_sound(ABSORB);
                     absorb_atom(cursor_position);
                     update_sprites();
 
                 } else {
 
-                    play_add_atom_sound();
+                    play_sound(ADD_ATOM);
                     insert_atom(cursor_position, center_atom_value, get_cursor_angle());
                     spawn_center_atom();
                     update_sprites();
@@ -118,7 +121,7 @@ void main(void){
 
             if((curr_joypad & J_START) && !(prev_joypad & J_START)){
                 game_state = GAME_STATE_TITLE;
-                play_transition_sound();
+                play_sound(START);
                 show_titlescreen();
                 start_music();
 

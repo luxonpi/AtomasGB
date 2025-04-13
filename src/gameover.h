@@ -11,17 +11,17 @@
 #define gameover_TILE_H 8
 #define gameover_WIDTH 160
 #define gameover_HEIGHT 144
-#define gameover_TILE_COUNT 128
-#define gameover_PALETTE_COUNT 1
+#define gameover_TILE_COUNT 120
+#define gameover_PALETTE_COUNT 2
 #define gameover_COLORS_PER_PALETTE 4
-#define gameover_TOTAL_COLORS 4
+#define gameover_TOTAL_COLORS 8
 #define gameover_MAP_ATTRIBUTES 0
 extern const unsigned char gameover_map[360];
 #define gameover_map_attributes gameover_map
 
 BANKREF_EXTERN(gameover)
 
-extern const palette_color_t gameover_palettes[4];
-extern const uint8_t gameover_tiles[2048];
+extern const palette_color_t gameover_palettes[8];
+extern const uint8_t gameover_tiles[1920];
 
 #endif

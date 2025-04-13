@@ -2,48 +2,61 @@
 #include <gb/gb.h>
 #include <stdint.h>
 
-// Note frequencies
-#define C4 256
-#define D4 288
-#define E4 320
-#define F4 341
-#define G4 384
-#define A4 427
-#define B4 480
-#define C5 512
-#define REST 0
+// https://gist.github.com/scazon/9bb7daab2d1a8342ade3
+const uint16_t frequencies[] = { //values based on a formula used by the GB processor
+  44, 156, 262, 363, 457, 547, 631, 710, 786, 854, 923, 986,
+  1046, 1102, 1155, 1205, 1253, 1297, 1339, 1379, 1417, 1452, 1486, 1517,
+  1546, 1575, 1602, 1627, 1650, 1673, 1694, 1714, 1732, 1750, 1767, 1783,
+  1798, 1812, 1825, 1837, 1849, 1860, 1871, 1881, 1890, 1899, 1907, 1915,
+  1923, 1930, 1936, 1943, 1949, 1954, 1959, 1964, 1969, 1974, 1978, 1982,
+  1985, 1988, 1992, 1995, 1998, 2001, 2004, 2006, 2009, 2011, 2013, 2015,
+  0
+};
 
-#define song_length 40
-uint8_t note_duration = 15;  // Slightly faster tempo
+#define song_length 96
+uint8_t note_duration = 3;  // Slightly faster tempo
 uint8_t note_timer = 0;
 uint8_t current_note = 0;
 
 // Mysterious melody pattern
-const uint16_t melody[] = {
-    C4, REST, G4, REST,   // Mysterious opening
-    E4, REST, C4, REST,   // Echo effect
-    B4, REST, G4, REST,   // Rising tension
-    F4, REST, D4, REST,   // Falling pattern
-    C4, C4, G4, G4,      // Repeating motif
-    E4, E4, B4, REST,    // Building mystery
-    G4, F4, E4, D4,      // Descending line
-    C4, REST, C5, REST,   // Wide interval jump
-    G4, REST, E4, REST,   // Fading out
-    C4, REST, REST, REST  // Final note with silence
+const pitch note_sequence[] = {
+    // Section A
+    C4, REST, REST, G5,REST,REST,C5,REST,
+    C4, REST, REST, G5,REST,REST,C5,REST,
+    C4, REST, REST, A5,REST,REST,E5,REST,  
+    C4, REST, REST, F5,E5,F5,C5,REST,
+    // Section A`
+    C4, REST, REST, G5,REST,REST,C5,REST,
+    C4, REST, REST, G5,REST,REST,C5,REST,
+    C4, G5, REST, F5,REST,E5,C5,REST,  
+    G5, E5, REST, C5,REST,REST,REST,REST,   
+    // Section B
+    C5, REST, G4, REST,E4,D4,C5,REST,
+    C5, REST, G4, REST,E4,D4,C5,REST,
+    C4, REST, REST, A5,REST,REST,E5,REST,  
+    C5, REST, G4, REST,E4,D4,C4,REST,
+    // Section B`
+    
+
 };
 
 // Mysterious drum pattern (0 = no drum, 1 = drum hit)
 const uint8_t drum_pattern[] = {
-    1, 0, 0, 0,  // Sparse drum hits
-    0, 0, 1, 0,  // for mysterious
-    0, 1, 0, 0,  // atmosphere
-    1, 0, 0, 0,  
-    0, 0, 1, 0,
-    0, 0, 0, 1,
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    1, 0, 0, 1
+    1, 0, 0, 0, 1, 1, 0, 0, 
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 0, 0, 1, 1, 1, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 0, 1, 0, 0, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 0, 0, 1, 1, 1, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    1, 0, 0, 0, 1, 1, 0, 0,
+    
 };
 
 
@@ -67,8 +80,8 @@ void start_music(void) {
 void update_background_music(void) {
     if (note_timer++ >= note_duration) {
         note_timer = 0;
-        if (melody[current_note] != REST) {
-            play_note(melody[current_note]);
+        if (note_sequence[current_note] != REST) {
+            play_note(&note_sequence[current_note]);
         }
         if (drum_pattern[current_note]) {
             play_drum();
@@ -78,19 +91,59 @@ void update_background_music(void) {
 } 
 
 void stop_music(void) {
-    NR52_REG = 0x00;
+
 }
 
 
-void play_note(uint16_t frequency) {
-    if (frequency == REST) return;
+void play_note(pitch *n) {
+    if (n == REST) return;
     
-    // Channel 1 (Square Wave)
-    NR10_REG = 0x00;    // No sweep
-    NR11_REG = 0x80;    // 50% duty cycle
-    NR12_REG = 0x83;    // Volume = 8, fade down slower
-    NR13_REG = (uint8_t)(2048 - (frequency));
-    NR14_REG = 0x86;    // Frequency MSB + Initialize
+        NR10_REG = 0x00;    // No sweep
+        NR11_REG = 0x00;    // 12.5% duty cycle (more sine-like)
+        NR12_REG = 0x83;    // Volume = 8, fade down slower
+        NR13_REG = (UBYTE)frequencies[(*n)]; //low bits of frequency
+        NR14_REG = 0x80U | ((UWORD)frequencies[(*n)]>>8); //high bits of frequency (and sound reset)
+
+}
+
+void play_sound(sound s){
+    switch(s){
+        case START:
+            NR10_REG = 0x2E;    // Sweep down, longer time
+            NR11_REG = 0x80;    // 50% duty cycle
+            NR12_REG = 0xF7;    // Max volume, slower decay
+            NR13_REG = 0x00;    // Start at higher frequency
+            NR14_REG = 0x86;    // Trigger sound, higher octave
+            break;
+        case COVERT:
+            play_note(C4);
+            delay(30);
+            play_note(E4);
+            delay(30);
+            play_note(G4);
+            break;
+        case ABSORB:
+            NR10_REG = 0x00;    // No sweep
+            NR11_REG = 0x80;    // 50% duty cycle
+            NR12_REG = 0x83;    // Volume = 8, fade down slower
+            NR13_REG = (uint8_t)(2048 - (C4 + 64));  // Start slightly higher than C4
+            NR14_REG = 0x86;    // Frequency MSB + Initialize
+            break;
+        case GAMEOVER:
+            play_note(C5);
+            delay(50);
+            play_note(G4);
+            delay(50);
+            play_note(E4);
+            delay(50);
+            // PLay noise 
+        case ADD_ATOM:
+            NR41_REG = 0x01;    // Very short length
+            NR42_REG = 0x61;    // Lower volume (6), quick decay
+            NR43_REG = 0x23;    // Mid-high frequency noise, less harsh
+            NR44_REG = 0x80;    // Initialize
+            break;
+    }
 }
 
 void play_drum(void) {
@@ -100,57 +153,13 @@ void play_drum(void) {
     NR44_REG = 0x80;    // Initialize
 }
 
-void play_transition_sound(void) {
-    // Sweep from high to low with longer duration
-    NR10_REG = 0x2E;    // Sweep down, longer time
-    NR11_REG = 0x80;    // 50% duty cycle
-    NR12_REG = 0xF7;    // Max volume, slower decay
-    NR13_REG = 0x00;    // Start at higher frequency
-    NR14_REG = 0x86;    // Trigger sound, higher octave
-}
-
-void play_add_atom_sound(void) {
-    // Channel 4 (Noise) with quick high-pitched blip
-    NR41_REG = 0x01;    // Very short length
-    NR42_REG = 0x61;    // Lower volume (6), quick decay
-    NR43_REG = 0x23;    // Mid-high frequency noise, less harsh
-    NR44_REG = 0x80;    // Initialize
-}
 
 void play_merge_atom_sound(uint8_t merge_count) {
-    // Play a note that increases in pitch with each merge
-    uint16_t base_freq = C4;
-    // Increase pitch by 12.5% for each merge (using integer arithmetic)
-    uint16_t freq = base_freq - ((base_freq * merge_count) >> 3);
-    play_note(freq);
+  
+    play_note(C4+merge_count);
 }
 
-void play_game_over_sound(void) {
-    // Play a descending arpeggio for game over
-    play_note(C5);
-    delay(50);
-    play_note(G4);
-    delay(50);
-    play_note(E4);
-    delay(50);
-    play_note(C4);
-}
 
-void play_absorb_atom_sound(void) {
-    // Play a quick descending note for absorption
-    NR10_REG = 0x00;    // No sweep
-    NR11_REG = 0x80;    // 50% duty cycle
-    NR12_REG = 0x83;    // Volume = 8, fade down slower
-    NR13_REG = (uint8_t)(2048 - (C4 + 64));  // Start slightly higher than C4
-    NR14_REG = 0x86;    // Frequency MSB + Initialize
-}
 
-void play_convert_atom_sound(void) {
-    // Play a rising arpeggio for conversion
-    play_note(C4);
-    delay(30);
-    play_note(E4);
-    delay(30);
-    play_note(G4);
-}
+
 
