@@ -8,6 +8,7 @@
 #include "sound.h"
 #include "savedata.h"
 
+
 app_state_t app_state = AS_TITLE;
 game_state_t game_state = GS_INPUT;
 
@@ -396,18 +397,23 @@ void update_game(){
                 if(score > highscore){
                     highscore = score;
                     new_highscore=1;
-                    SaveData();
+                    save_game(highscore, highelement);
+                    
                 }
 
                 if(latest_element > highelement){
                     highelement = latest_element;
-                    SaveData();
+                    save_game(highscore, highelement);
+
                 }
 
              
             }
         }
     }
+
+   
+    
 }
 
 void update_atoms_angle(uint8_t position, uint8_t pivot_angle){
@@ -434,37 +440,6 @@ uint8_t get_cursor_angle(){
 }
 
 
-// Save and Load functions // 
-
-uint8_t HasExistingSave(void){
-
-    uint8_t saveDataExists = FALSE;
-    ENABLE_RAM;
-    saveDataExists = savedCheckFlag1==12345;
-    DISABLE_RAM;
-    return saveDataExists;
-}
-
-void LoadSaveData(void){
-    
-    ENABLE_RAM;
-
-    highscore = saved_highscore;
-    highelement = saved_highelement;
-
-    DISABLE_RAM;
-}
-
-void SaveData(void){
-
-    ENABLE_RAM;
-
-    savedCheckFlag1=12345;
-    saved_highscore=highscore;
-    saved_highelement=highelement;
-
-    DISABLE_RAM;
-}
 
 
 

@@ -3,8 +3,7 @@
 
 #include <gb/gb.h>
 
-extern uint16_t saved_highscore;
-extern uint16_t saved_highelement;
-extern uint16_t savedCheckFlag1;
+void save_game(uint16_t highscore, uint16_t highelement);
+void load_save(uint16_t * highscore, uint16_t* highelement);
 
 #endif

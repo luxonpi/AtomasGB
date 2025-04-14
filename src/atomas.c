@@ -7,6 +7,7 @@
 #include "sound.h"
 #include "game.h"
 #include "display.h"
+#include "savedata.h"
 
 void main(void){
 
@@ -21,11 +22,7 @@ void main(void){
     app_state = AS_TITLE;
     game_state = GS_INPUT;
 
-    if(HasExistingSave()){
-        LoadSaveData();
-    }else{
-        SaveData();
-    }
+    load_save(&highscore, &highelement);
 
     init_sound();
     show_titlescreen();

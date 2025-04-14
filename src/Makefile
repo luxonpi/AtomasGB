@@ -4,13 +4,13 @@ ifndef GBDK_HOME
 	GBDK_HOME = ../
 endif
 
-LCC = $(GBDK_HOME)bin/lcc -Wa-l -Wl-m -Wl-j
+LCC = $(GBDK_HOME)bin/lcc -Wl-yt1A -Wl-yo4 -Wl-ya4 -Wm-yn"Atomas"   -Wa-l -Wl-m 
 
 BUILD_DIR = ../build
 BINS = $(BUILD_DIR)/atomas.gb
 
 # Add sound source files
-SRCS = atomas.c sound.c display.c game.c sintables.c gamebg.c gameover.c 
+SRCS = atomas.c sound.c display.c game.c sintables.c gamebg.c gameover.c savedata.c
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCS))
 
 # GBDK_DEBUG = ON
@@ -19,11 +19,6 @@ ifdef GBDK_DEBUG
 endif
 
 all: $(BUILD_DIR) $(BINS)
-
-$(BUILD_DIR)/savedata.o: savedata.c
-	$(LCC) $(LCCFLAGS) -Wf-ba0 -c -o $(BUILD_DIR)/savedata.o savedata.c
-
-
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -34,9 +29,12 @@ compile.bat: Makefile
 
 
 
-$(BINS):	$(SRCS) $(BUILD_DIR)/savedata.o
-	$(LCC) $(LCCFLAGS) -Wm-yt3 -Wm-yoA -Wm-ya1 -o $(BINS) $(SRCS) $(BUILD_DIR)/savedata.o
+# Compile and link single file in one pass
+$(BUILD_DIR)/%.gb: $(OBJS)
+	$(LCC) $(LCCFLAGS) -o $@ $(OBJS)
 
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(BUILD_DIR)
