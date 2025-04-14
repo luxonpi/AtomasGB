@@ -22,6 +22,16 @@ typedef enum {
     GS_GAME_OVER
 } game_state_t;
 
+// Atom struct definition
+typedef struct {
+    int8_t value;
+    uint8_t angle;
+    uint8_t target_angle;
+    uint8_t radius;
+    uint8_t target_radius;
+} Atom;
+
+
 extern app_state_t app_state;
 extern game_state_t game_state;
 
@@ -33,6 +43,8 @@ extern game_state_t game_state;
 #define PLUS_ATOM 120
 #define MINUS_ATOM 121
 
+
+
 // External variables
 extern uint16_t highscore;
 extern uint16_t highelement;
@@ -40,12 +52,8 @@ extern uint16_t score;
 extern uint16_t latest_element;
 extern uint8_t new_highscore;
 
-
 extern uint8_t numberOfAtoms;
-extern uint8_t atom_radius[MAX_ATOMS];
-extern uint8_t atom_angle[MAX_ATOMS];
-extern int8_t atom_values[MAX_ATOMS];
-
+extern Atom atoms[MAX_ATOMS];
 
 extern uint8_t cursor_position;
 extern uint8_t center_atom_value;

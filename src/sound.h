@@ -27,7 +27,7 @@ void start_music(void);
 void update_background_music(void);
 void stop_music(void);
 
-void play_note(pitch *n);
+void play_note(pitch n);
 void play_sound(sound s);
 void play_merge_atom_sound(uint8_t merge_count);
 

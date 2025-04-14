@@ -15,6 +15,7 @@ void main(void){
     LCDC_REG = LCDCF_ON | LCDCF_OBJON | LCDCF_BGON;
     SPRITES_8x8;
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4;
+
     enable_interrupts();
 
     app_state = AS_TITLE;
