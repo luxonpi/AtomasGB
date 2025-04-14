@@ -292,51 +292,48 @@ void update_game_display(void) {
     // Write latest element
     print_text_vertically_centered(2, ElementNames[latest_element%HIGHEST_ATOM_NUMBER]);
 
+    uint8_t cursor_angle = get_cursor_angle();  
+    Cursor.x = screen_center_x +  cos_table[cursor_angle]*7/10;
+    Cursor.y = screen_center_y +  sin_table[cursor_angle]*7/10;
 
-  
+        // Update all sprite positions
+    for(uint8_t i = 0; i < numberOfAtoms; i++) {
 
-        uint8_t cursor_angle = get_cursor_angle();  
-        Cursor.x = screen_center_x +  cos_table[cursor_angle]*7/10;
-        Cursor.y = screen_center_y +  sin_table[cursor_angle]*7/10;
+        AtomSprites[i].x = screen_center_x + cos_table[atom_angle[i]]*atom_radius[i]/100;
+        AtomSprites[i].y = screen_center_y + sin_table[atom_angle[i]]*atom_radius[i]/100;
+        move_sprite(i, AtomSprites[i].x, AtomSprites[i].y);
 
-          // Update all sprite positions
-        for(uint8_t i = 0; i < numberOfAtoms; i++) {
-
-            AtomSprites[i].x = screen_center_x + cos_table[atom_angle[i]]*atom_radius[i]/100;
-            AtomSprites[i].y = screen_center_y + sin_table[atom_angle[i]]*atom_radius[i]/100;
-            move_sprite(i, AtomSprites[i].x, AtomSprites[i].y);
-
-            if(i==reaction_pos || (center_atom_value==MINUS_ATOM && i==cursor_position)){
-                if (blink_state%3 == 0) {
-                    set_sprite_prop(i, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
-                } else {
-                    set_sprite_prop(i, S_PRIORITY);  // Use OBP1
-                }
-                blink_state +=1;
-                blink_state %= 100;
+        if(i==reaction_pos || (center_atom_value==MINUS_ATOM && i==cursor_position)){
+            if (blink_state%3 == 0) {
+                set_sprite_prop(i, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
             } else {
                 set_sprite_prop(i, S_PRIORITY);  // Use OBP1
-            }
-        }
-    
-        // Make cursor and center atom blink when an atom is absorbed and can be converted
-        if(game_state == GS_ATOM_ABSORBED) {
-            if (blink_state%2 == 0) {
-                set_sprite_prop(MAX_ATOMS+1, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
-                set_sprite_prop(MAX_ATOMS, S_PALETTE);    // Make center atom blink too
-            } else {
-                set_sprite_prop(MAX_ATOMS+1, S_PRIORITY);  // Use OBP1
-                set_sprite_prop(MAX_ATOMS, 0);    // Use OBP1
             }
             blink_state +=1;
             blink_state %= 100;
         } else {
-            set_sprite_prop(MAX_ATOMS+1, S_PRIORITY);  // Use OBP1
-            set_sprite_prop(MAX_ATOMS, 0);    // Normal visibility
+            set_sprite_prop(i, S_PRIORITY);  // Use OBP1
         }
-      
-        move_sprite(MAX_ATOMS, CenterAtom.x, CenterAtom.y);
-        move_sprite(MAX_ATOMS+1, Cursor.x, Cursor.y);
+    }
+
+    // Make cursor and center atom blink when an atom is absorbed and can be converted
+    if(game_state == GS_ATOM_ABSORBED) {
+        if (blink_state%2 == 0) {
+            set_sprite_prop(MAX_ATOMS+1, S_PRIORITY| S_PALETTE);  // Use OBP0 (default)
+            set_sprite_prop(MAX_ATOMS, S_PALETTE);    // Make center atom blink too
+        } else {
+            set_sprite_prop(MAX_ATOMS+1, S_PRIORITY);  // Use OBP1
+            set_sprite_prop(MAX_ATOMS, 0);    // Use OBP1
+        }
+        blink_state +=1;
+        blink_state %= 100;
+    } else {
+        set_sprite_prop(MAX_ATOMS+1, S_PRIORITY);  // Use OBP1
+        set_sprite_prop(MAX_ATOMS, 0);    // Normal visibility
+    }
+    
+    move_sprite(MAX_ATOMS, CenterAtom.x, CenterAtom.y);
+    move_sprite(MAX_ATOMS+1, Cursor.x, Cursor.y);
 }
 
 

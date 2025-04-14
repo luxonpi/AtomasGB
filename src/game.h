@@ -6,7 +6,6 @@
 typedef enum {
     AS_TITLE,
     AS_GAME,
-    AS_COUNTDOWN,
     AS_GAME_OVER,
     AS_HIGHSCORE_SCREEN
 } app_state_t;

@@ -42,7 +42,7 @@ uint8_t atoms_to_middle_timer = 0;
 
 // -1 means no reaction
 int8_t reaction_pos=0;
-int8_t maxReactionValue=-1;
+int16_t maxReactionValue=-1;
 
 // Add at the top with other global variables
 uint8_t minus_absorb_position = 0;
@@ -97,6 +97,10 @@ void start_new_game(void){
 }
 
 void end_move(void){
+
+    reaction_pos=-1;
+    consecutive_reactions = 0;  // Reset counter when no more reactions
+    maxReactionValue=-1;
 
     moves_count++;
     moves_whithout_minus++;
@@ -183,6 +187,10 @@ uint8_t check_reactions(void){
 
                 atom_target_angle[left_atom] = plus_angle;
                 atom_target_angle[right_atom] = plus_angle;
+
+                if(atom_values[left_atom] > maxReactionValue)
+                maxReactionValue = atom_values[left_atom];
+
                 // update target angle
                 return 1;
         
@@ -274,29 +282,33 @@ void update_game(){
         int8_t hadreaction = check_reactions();
 
         if(hadreaction){
+            
             game_state = GS_REACTION_ANIMATION;
-        } else {
+
+        }else if(numberOfAtoms>=20){
+
+            game_state = GS_ATOMS_TO_MIDDLE;
+
+        }else {
+
             game_state = GS_INPUT;
-            reaction_pos=-1;
-            consecutive_reactions = 0;  // Reset counter when no more reactions
-            maxReactionValue=-1;
             end_move();
+
         }
 
     }else if(game_state == GS_REACTION_ANIMATION && animation_done==1){
 
-          // reaction
-
+        // reaction
         if(maxReactionValue!=-1 && atom_values[reaction_pos] < maxReactionValue){
             atom_values[reaction_pos]= maxReactionValue;
         }
 
         atom_values[reaction_pos] += 1;
+        maxReactionValue +=1;
         score += atom_values[reaction_pos];
 
         if(atom_values[reaction_pos] > latest_element && atom_values[reaction_pos] < 118) latest_element = atom_values[reaction_pos];
-        
-        maxReactionValue = atom_values[reaction_pos];
+       
 
         // Play merge sound with increasing pitch based on consecutive reactions
         consecutive_reactions++;

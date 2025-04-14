@@ -123,11 +123,7 @@ void main(void){
                 }
 
 
-                // Check if number of atoms is 20
-                if(numberOfAtoms >= 20){
-                    game_state = GS_ATOMS_TO_MIDDLE;
-                    
-                }
+                
 
             }
 
