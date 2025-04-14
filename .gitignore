@@ -18,6 +18,7 @@ licenses
 *.lst
 *.sym
 *.ihx
+*.o
 
 .DS_Store
 .vscode/settings.json

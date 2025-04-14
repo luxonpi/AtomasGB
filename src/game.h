@@ -3,20 +3,28 @@
 
 #include <stdint.h>
 
-// Game states
-#define GAME_STATE_TITLE 0
-#define GAME_STATE_GAME 1
-#define GAME_STATE_COUNTDOWN 2
-#define GAME_STATE_GAME_OVER 3
+typedef enum {
+    AS_TITLE,
+    AS_GAME,
+    AS_COUNTDOWN,
+    AS_GAME_OVER,
+    AS_HIGHSCORE_SCREEN
+} app_state_t;
 
-#define GAME_SUBSTATE_INPUT 0
-#define GAME_SUBSTATE_ABSORB_ANIMATION 1
-#define GAME_SUBSTATE_INSERT_ANIMATION 2
-#define GAME_SUBSTATE_REACTION_ANIMATION 3
-#define GAME_SUBSTATE_ATOMS_TO_MIDDLE 4
-#define GAME_SUBSTATE_MINUS_ABSORB 5
-#define GAME_SUBSTATE_MINUS_ABSORB_ANIMATION 6
-#define GAME_SUBSTATE_ATOM_ABSORBED 7
+typedef enum {
+    GS_INPUT,
+    GS_ABSORB_ANIMATION,
+    GS_INSERT_ANIMATION,
+    GS_REACTION_ANIMATION,
+    GS_ATOMS_TO_MIDDLE,
+    GS_MINUS_ABSORB,
+    GS_MINUS_ABSORB_ANIMATION,
+    GS_ATOM_ABSORBED,
+    GS_GAME_OVER
+} game_state_t;
+
+extern app_state_t app_state;
+extern game_state_t game_state;
 
 // Atom configuration
 #define INITIAL_ATOMS 10
@@ -27,21 +35,22 @@
 #define MINUS_ATOM 121
 
 // External variables
-extern uint8_t highscore;
-extern uint8_t score;
+extern uint16_t highscore;
+extern uint16_t highelement;
+extern uint16_t score;
+extern uint16_t latest_element;
+extern uint8_t new_highscore;
+
+
 extern uint8_t numberOfAtoms;
-
-
 extern uint8_t atom_radius[MAX_ATOMS];
 extern uint8_t atom_angle[MAX_ATOMS];
 extern int8_t atom_values[MAX_ATOMS];
 
+
 extern uint8_t cursor_position;
 extern uint8_t center_atom_value;
-extern uint8_t game_state;
-extern uint8_t game_substate;
 extern int8_t reaction_pos;
-extern uint8_t highest_atom_number;
 
 // Function declarations
 void start_new_game(void);
@@ -53,5 +62,8 @@ void absorb_atom(uint8_t position);
 uint8_t get_cursor_angle();
 void update_atoms_angle(uint8_t position, uint8_t pivot_angle);
 void update_game(void);
+uint8_t HasExistingSave(void);
+void LoadSaveData(void);
+void SaveData(void);
 
 #endif /* GAME_H */ 

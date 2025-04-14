@@ -25,6 +25,7 @@ extern struct Sprite Cursor;
 // Function declarations
 void show_titlescreen(void);
 void show_gamescreen(void);
+void show_highscore_screen(void);
 void update_sprites(void);
 
 #endif 

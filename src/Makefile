@@ -10,7 +10,7 @@ BUILD_DIR = ../build
 BINS = $(BUILD_DIR)/atomas.gb
 
 # Add sound source files
-SRCS = atomas.c sound.c display.c game.c sintables.c gamebg.c gameover.c
+SRCS = atomas.c sound.c display.c game.c sintables.c gamebg.c gameover.c 
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCS))
 
 # GBDK_DEBUG = ON
@@ -20,6 +20,11 @@ endif
 
 all: $(BUILD_DIR) $(BINS)
 
+$(BUILD_DIR)/savedata.o: savedata.c
+	$(LCC) $(LCCFLAGS) -Wf-ba0 -c -o $(BUILD_DIR)/savedata.o savedata.c
+
+
+
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
@@ -27,12 +32,11 @@ compile.bat: Makefile
 	@echo "REM Automatically generated from Makefile" > compile.bat
 	@make -sn | sed y/\\//\\\\/ | sed s/mkdir\ -p\/mkdir\/ | grep -v make >> compile.bat
 
-# Compile and link single file in one pass
-$(BUILD_DIR)/%.gb: $(OBJS)
-	$(LCC) $(LCCFLAGS) -o $@ $(OBJS)
 
-$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+$(BINS):	$(SRCS) $(BUILD_DIR)/savedata.o
+	$(LCC) $(LCCFLAGS) -Wm-yt3 -Wm-yoA -Wm-ya1 -o $(BINS) $(SRCS) $(BUILD_DIR)/savedata.o
+
 
 clean:
 	rm -rf $(BUILD_DIR)

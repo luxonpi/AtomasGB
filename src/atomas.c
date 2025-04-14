@@ -4,7 +4,6 @@
 #include <gb/gb.h>
 #include <gbdk/font.h>
 
-#include "sintables.h"
 #include "sound.h"
 #include "game.h"
 #include "display.h"
@@ -15,10 +14,17 @@ void main(void){
     disable_interrupts();
     LCDC_REG = LCDCF_ON | LCDCF_OBJON | LCDCF_BGON;
     SPRITES_8x8;
-
-    OBP0_REG = 0xE4;
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4;
     enable_interrupts();
+
+    app_state = AS_TITLE;
+    game_state = GS_INPUT;
+
+    if(HasExistingSave()){
+        LoadSaveData();
+    }else{
+        SaveData();
+    }
 
     init_sound();
     show_titlescreen();
@@ -31,7 +37,7 @@ void main(void){
 
         uint8_t curr_joypad = joypad();
 
-        if (game_state == GAME_STATE_TITLE) {
+        if (app_state == AS_TITLE) {
 
             // Update music
             update_background_music();
@@ -42,45 +48,64 @@ void main(void){
             // Start game with start button
             if ((curr_joypad & J_START) && !(prev_joypad & J_START)) {
             
-                game_state = GAME_STATE_GAME;
+                app_state = AS_GAME;
                 play_sound(START);
                 start_new_game();
                 show_gamescreen();
                 stop_music();
-               
-                        
+                         
+            }if ((curr_joypad & J_SELECT) && !(prev_joypad & J_SELECT)) {
+            
+                app_state = AS_HIGHSCORE_SCREEN;
+                show_highscore_screen();
+
             }
    
-        }else if (game_state == GAME_STATE_GAME) {
+        }else if (app_state == AS_GAME) {
 
             // Select button to go to title screen
             if ((curr_joypad & J_SELECT) && !(prev_joypad & J_SELECT)) {
-                game_state = GAME_STATE_TITLE;
+                app_state = AS_TITLE;
                 play_sound(START);
                 show_titlescreen();
                 start_music();
             }
 
+        }else if (app_state == AS_HIGHSCORE_SCREEN) {
+
+            update_background_music();
+
+            // Select button to go to title screen
+            if ((curr_joypad & J_SELECT) && !(prev_joypad & J_SELECT)) {
+                app_state = AS_TITLE;
+                show_titlescreen();
+                
+            }
         }
     
-        
         // Only process game logic if in game state
-        if (game_state == GAME_STATE_GAME) {
+        if (app_state == AS_GAME) {
            
             update_game();
             update_game_display();
 
-            if(game_substate == GAME_SUBSTATE_ATOM_ABSORBED && (curr_joypad & J_B) && !(prev_joypad & J_B)){
+            if(game_state == GS_GAME_OVER){
+            
+                app_state = AS_GAME_OVER;
+                set_gameover_display();
+                play_sound(GAMEOVER);
+            
+            }else if(game_state == GS_ATOM_ABSORBED && (curr_joypad & J_B) && !(prev_joypad & J_B)){
                
                 // Convert the absorbed atom to a plus atom
                 center_atom_value = PLUS_ATOM;
                 play_sound(COVERT);
-                game_substate = GAME_SUBSTATE_INPUT;
+                game_state = GS_INPUT;
                 update_sprites();
                 
             }
             // if a is pressed, insert an atom
-            else if((curr_joypad & J_A) && !(prev_joypad & J_A) && (game_substate == GAME_SUBSTATE_INPUT || game_substate == GAME_SUBSTATE_ATOM_ABSORBED)){
+            else if((curr_joypad & J_A) && !(prev_joypad & J_A) && (game_state == GS_INPUT || game_state == GS_ATOM_ABSORBED)){
                
             
                 if(center_atom_value == MINUS_ATOM) {
@@ -100,7 +125,7 @@ void main(void){
 
                 // Check if number of atoms is 20
                 if(numberOfAtoms >= 20){
-                    game_substate = GAME_SUBSTATE_ATOMS_TO_MIDDLE;
+                    game_state = GS_ATOMS_TO_MIDDLE;
                     
                 }
 
@@ -117,10 +142,10 @@ void main(void){
             
         }
 
-        if(game_state == GAME_STATE_GAME_OVER){
+        if(app_state == AS_GAME_OVER){
 
             if((curr_joypad & J_START) && !(prev_joypad & J_START)){
-                game_state = GAME_STATE_TITLE;
+                app_state = AS_TITLE;
                 play_sound(START);
                 show_titlescreen();
                 start_music();

@@ -6,9 +6,17 @@
 #include "sintables.h"
 #include "display.h"
 #include "sound.h"
+#include "savedata.h"
 
-uint8_t highscore = 0;
-uint8_t score = 0;
+app_state_t app_state = AS_TITLE;
+game_state_t game_state = GS_INPUT;
+
+uint16_t highscore = 0;
+uint16_t highelement = 0;
+uint8_t new_highscore=0;
+
+uint16_t score = 0;
+uint16_t latest_element = 0;
 
 uint8_t numberOfAtoms = INITIAL_ATOMS;
 int8_t atom_values[MAX_ATOMS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -21,14 +29,12 @@ uint8_t cursor_position = 0;
 uint8_t moves_whithout_plus = 0;
 uint8_t moves_whithout_minus = 0;
 uint8_t moves_count = 0;
-uint8_t highest_atom_number = 0;
 
 uint8_t lowestValue = 1;
 uint8_t valueRange = 3;
 
 uint8_t center_atom_value = 0;
-uint8_t game_state = GAME_STATE_TITLE;
-uint8_t game_substate = GAME_SUBSTATE_INPUT;
+
 
 // Add these variables at the top with other global variables
 uint8_t atoms_to_middle_index = 0;
@@ -44,29 +50,38 @@ uint8_t consecutive_reactions = 0;  // Track number of consecutive reactions
 
 void start_new_game(void){
 
+    // reset all atom values
+    for(uint8_t i = 0; i < MAX_ATOMS; i++) {
+        atom_values[i] = 0;
+        atom_angle[i] = 0;
+        atom_target_angle[i] = 1;
+        atom_radius[i] = 100;
+        atom_target_radius[i] = 100;
+    }
+
+
     uint16_t seed = LY_REG;
     seed |= (uint16_t)DIV_REG << 8;
     initrand(seed);
 
     reaction_pos=-1;
-    game_substate = GAME_SUBSTATE_INPUT;
+    game_state = GS_INPUT;
     consecutive_reactions = 0;  
-    highest_atom_number = 0;
+    latest_element = 0;
 
     moves_count = 0;
     moves_whithout_minus = 0;
     moves_whithout_plus = 0;
     lowestValue = 1;
-    valueRange = 3;
-
+    valueRange = 4;
+    new_highscore=0;
 
     score = 0;
-    highscore = 0;
     numberOfAtoms = INITIAL_ATOMS;
 
     for(uint8_t i = 0; i < numberOfAtoms; i++) {
-        atom_values[i] = rand() % 3; 
-        if(atom_values[i] > highest_atom_number && atom_values[i] < 118) highest_atom_number = atom_values[i];
+        atom_values[i] = rand() % valueRange + lowestValue; 
+        if(atom_values[i] > latest_element && atom_values[i] < 118) latest_element = atom_values[i];
 
         atom_radius[i] = 0;
         atom_target_radius[i] = 100;
@@ -107,7 +122,7 @@ void absorb_atom(uint8_t position){
 
     minus_absorb_position = position;
     atom_target_radius[minus_absorb_position] = 0;
-    game_substate = GAME_SUBSTATE_MINUS_ABSORB;
+    game_state = GS_MINUS_ABSORB;
     play_sound(ABSORB);
 
 }
@@ -140,7 +155,7 @@ void spawn_center_atom(void) {
    
     }
 
-    if(center_atom_value > highest_atom_number && center_atom_value < 118) highest_atom_number = center_atom_value;
+    if(center_atom_value > latest_element && center_atom_value < 118) latest_element = center_atom_value;
     
 
 }
@@ -208,7 +223,7 @@ void insert_atom(uint8_t position, uint8_t value, uint8_t angle){
     update_atoms_angle(adjusted_position, angle);
     
     score += 1;
-    game_substate = GAME_SUBSTATE_INSERT_ANIMATION;
+    game_state = GS_INSERT_ANIMATION;
     update_sprites();
 }
 
@@ -254,21 +269,21 @@ void update_game(){
         if(atom_angle[i]!=atom_target_angle[i]) animation_done = 0;
     }
 
-    if(game_substate == GAME_SUBSTATE_INSERT_ANIMATION && animation_done==1){
+    if(game_state == GS_INSERT_ANIMATION && animation_done==1){
 
         int8_t hadreaction = check_reactions();
 
         if(hadreaction){
-            game_substate = GAME_SUBSTATE_REACTION_ANIMATION;
+            game_state = GS_REACTION_ANIMATION;
         } else {
-            game_substate = GAME_SUBSTATE_INPUT;
+            game_state = GS_INPUT;
             reaction_pos=-1;
             consecutive_reactions = 0;  // Reset counter when no more reactions
             maxReactionValue=-1;
             end_move();
         }
 
-    }else if(game_substate == GAME_SUBSTATE_REACTION_ANIMATION && animation_done==1){
+    }else if(game_state == GS_REACTION_ANIMATION && animation_done==1){
 
           // reaction
 
@@ -279,7 +294,7 @@ void update_game(){
         atom_values[reaction_pos] += 1;
         score += atom_values[reaction_pos];
 
-        if(atom_values[reaction_pos] > highest_atom_number && atom_values[reaction_pos] < 118) highest_atom_number = atom_values[reaction_pos];
+        if(atom_values[reaction_pos] > latest_element && atom_values[reaction_pos] < 118) latest_element = atom_values[reaction_pos];
         
         maxReactionValue = atom_values[reaction_pos];
 
@@ -301,10 +316,10 @@ void update_game(){
 
         update_atoms_angle(reaction_pos, atom_angle[reaction_pos]);
         
-        game_substate = GAME_SUBSTATE_INSERT_ANIMATION;
+        game_state = GS_INSERT_ANIMATION;
         update_sprites();
 
-    }else if(game_substate == GAME_SUBSTATE_MINUS_ABSORB && animation_done==1) {
+    }else if(game_state == GS_MINUS_ABSORB && animation_done==1) {
         // Store the absorbed atom's value
         uint8_t absorbed_value = atom_values[minus_absorb_position];
         
@@ -326,25 +341,40 @@ void update_game(){
         center_atom_value = absorbed_value;
         
         // Change to absorbed state where player can convert the atom
-        game_substate = GAME_SUBSTATE_ATOM_ABSORBED;
+        game_state = GS_ATOM_ABSORBED;
         update_sprites();
         
-    }else if(game_substate == GAME_SUBSTATE_ATOMS_TO_MIDDLE) {
+    }else if(game_state == GS_ATOMS_TO_MIDDLE) {
         // Wait a bit between each atom
         if(atoms_to_middle_timer++ >= 2) {
             atoms_to_middle_timer = 0;
             
             if(atoms_to_middle_index < numberOfAtoms) {
                 // Add current atom's value to score
-                score += atom_values[atoms_to_middle_index];
+                
+                if(atom_values[atoms_to_middle_index]!=PLUS_ATOM && atom_values[atoms_to_middle_index]!=MINUS_ATOM){
+                    score += atom_values[atoms_to_middle_index];
+                }
                 // Move atom to center by reducing target radius
                 atom_target_radius[atoms_to_middle_index] = 0;
                 atoms_to_middle_index++;
+
             } else if(animation_done) {
                 // All atoms have reached center, transition to game over
-                game_state = GAME_STATE_GAME_OVER;
-                set_gameover_display();
-                play_sound(GAMEOVER);
+                game_state = GS_GAME_OVER;
+
+                if(score > highscore){
+                    highscore = score;
+                    new_highscore=1;
+                    SaveData();
+                }
+
+                if(latest_element > highelement){
+                    highelement = latest_element;
+                    SaveData();
+                }
+
+             
             }
         }
     }
@@ -374,16 +404,36 @@ uint8_t get_cursor_angle(){
 }
 
 
-#define SAVE_ADDR 0xA000  // Start address in SRAM
+// Save and Load functions // 
 
-void save_highscore(uint8_t score) {
+uint8_t HasExistingSave(void){
 
+    uint8_t saveDataExists = FALSE;
+    ENABLE_RAM;
+    saveDataExists = savedCheckFlag1==12345;
+    DISABLE_RAM;
+    return saveDataExists;
 }
 
-void load_highscore() {
+void LoadSaveData(void){
+    
+    ENABLE_RAM;
 
+    highscore = saved_highscore;
+    highelement = saved_highelement;
 
-   
+    DISABLE_RAM;
+}
+
+void SaveData(void){
+
+    ENABLE_RAM;
+
+    savedCheckFlag1=12345;
+    saved_highscore=highscore;
+    saved_highelement=highelement;
+
+    DISABLE_RAM;
 }
 
 
