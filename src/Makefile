@@ -4,7 +4,7 @@ ifndef GBDK_HOME
 	GBDK_HOME = ../
 endif
 
-LCC = $(GBDK_HOME)bin/lcc -Wl-yt1A -Wl-yo4 -Wl-ya4 -Wm-yn"Atomas"   -Wa-l -Wl-m 
+LCC = $(GBDK_HOME)bin/lcc -Wm-yt0x1A -Wl-yo4 -Wl-ya4 -Wm-yn"Atomas"   -Wa-l -Wl-m 
 
 BUILD_DIR = ../build
 BINS = $(BUILD_DIR)/atomas.gb

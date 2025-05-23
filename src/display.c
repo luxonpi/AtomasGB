@@ -11,6 +11,7 @@
 #include "gamebg.h"
 #include "gameover.h"
 #include "element_names.h"
+#include "savedata.h"
 
 // Place the background tiles into VRAM (set_bkg_data)  256 tiles
 // Showing the background  (set_bkg_tiles)
@@ -43,7 +44,7 @@ int8_t get_noise(uint8_t x, uint8_t y, uint8_t time) {
 void clear_screen(void) {
 
     fill_bkg_rect(0, 0, 20, 18, 0xFF);
-    set_bkg_data(gamebg_TILE_COUNT,11+27,FontTiles);
+    set_bkg_data(gamebg_TILE_COUNT,11+28,FontTiles);
 
     // Clear sprites
     for(uint8_t i = 0; i < MAX_ATOMS + 2; i++) {
@@ -147,6 +148,8 @@ uint8_t GetCharacterVRamTile(char character) {
     if(character >= 'A'&&character <= 'Z') return (character-'A')+gamebg_TILE_COUNT+11;
     if(character >= 'a'&&character <= 'z') return (character-'a')+gamebg_TILE_COUNT+11;
     if(character == ' ') return gamebg_TILE_COUNT+10;
+    if(character == '-') return gamebg_TILE_COUNT+37;
+
     return 0;
 
 }
@@ -155,7 +158,7 @@ uint8_t GetCharacterVRamTile(char character) {
 void show_gamescreen(void) {
     // Set Background and font tiles
     fill_bkg_rect(0, 0, 20, 18, 0xFF);  // Clear entire background
-    set_bkg_data(gamebg_TILE_COUNT,11+26,FontTiles);
+    set_bkg_data(gamebg_TILE_COUNT,11+27,FontTiles);
     set_bkg_data(0,gamebg_TILE_COUNT,gamebg_tiles);
     set_bkg_tiles(0,0,20,18,gamebg_map);
 
@@ -229,7 +232,7 @@ void print_text_vertically_centered(int y, char* text){
 void show_highscore_screen(void) {
     // Clear entire background
     fill_bkg_rect(0, 0, 20, 18, 0xFF);
-    set_bkg_data(gamebg_TILE_COUNT,11+27,FontTiles);
+    set_bkg_data(gamebg_TILE_COUNT,11+28,FontTiles);
 
 
     // Hide all sprites
@@ -286,6 +289,17 @@ void update_game_display(void) {
     // Clear the score and element text
     print_text_vertically_centered(1, "          ");
     print_text_vertically_centered(2, "          ");
+
+    print_text_vertically_centered(6, "   ");
+
+    if(numberOfAtoms == MAX_ATOMS-1){
+        print_text_vertically_centered(6, "--");
+    }
+
+    if(numberOfAtoms == MAX_ATOMS-2){
+        print_text_vertically_centered(6, "-");
+    }
+
 
     // Write Score
     char score_buffer[10];

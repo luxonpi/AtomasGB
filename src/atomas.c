@@ -22,7 +22,7 @@ void main(void){
     app_state = AS_TITLE;
     game_state = GS_INPUT;
 
-    load_save(&highscore, &highelement);
+    load_save();
 
     init_sound();
     show_titlescreen();
@@ -72,6 +72,8 @@ void main(void){
         }else if (app_state == AS_HIGHSCORE_SCREEN) {
 
             update_background_music();
+
+            delay(30);
 
             // Select button to go to title screen
             if ((curr_joypad & J_SELECT) && !(prev_joypad & J_SELECT)) {

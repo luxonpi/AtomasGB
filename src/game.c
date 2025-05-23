@@ -36,8 +36,7 @@ Atom atoms[MAX_ATOMS] = {
     {0, 0, 0, 100, 100}
 };
 
-uint16_t highscore = 0;
-uint16_t highelement = 0;
+
 uint8_t new_highscore=0;
 
 uint16_t score = 0;
@@ -300,7 +299,7 @@ void update_game(){
             
             game_state = GS_REACTION_ANIMATION;
 
-        }else if(numberOfAtoms>=20){
+        }else if(numberOfAtoms>=MAX_ATOMS){
 
             game_state = GS_ATOMS_TO_MIDDLE;
 
@@ -397,13 +396,13 @@ void update_game(){
                 if(score > highscore){
                     highscore = score;
                     new_highscore=1;
-                    save_game(highscore, highelement);
+                    save_game();
                     
                 }
 
                 if(latest_element > highelement){
                     highelement = latest_element;
-                    save_game(highscore, highelement);
+                    save_game();
 
                 }
 

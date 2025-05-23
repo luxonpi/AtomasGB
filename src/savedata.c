@@ -1,34 +1,48 @@
 #include <gb/gb.h>
+#include <gbdk/platform.h>
+#include <stdint.h>
+#include <string.h>
+
 #include "savedata.h"
 
-char *saved = (char *)0xa000; // Pointer to memory address
-uint16_t *f_highscore = (uint16_t *)0xa001;
-uint16_t *f_highelement = (uint16_t *)0xa002;
+struct settings_rec {
+    uint16_t saved;
+    uint16_t highscore;
+    uint16_t highelement;
+};  
 
-void save_game(uint16_t highscore, uint16_t highelement) {
-    // Save the data to external RAM
-    ENABLE_RAM_MBC5;
-    f_highscore = highscore;
-    f_highelement = highelement;
-    DISABLE_RAM_MBC5;
-}
+// Global settings structure
+struct settings_rec game_settings;
 
-void load_save(uint16_t * highscore, uint16_t* highelement) {
-    // Load data from external RAM
-    ENABLE_RAM_MBC5;
+// Map a secondary stats struct to the beginning of SRAM (0xA000) when using MBC5
+struct settings_rec sram_stats;
 
-    if (saved[0] != 's') { // Check to see if the variable's ever been saved before
-		*highscore=0;
-		*highelement=0;
-		saved[0] = 's'; // Assign saved an 's' value so the if statement isn't executed on next load
-	}else{
-        *highscore = f_highscore;
-        *highelement = f_highelement;
+uint16_t highscore = 0;
+uint16_t highelement = 0;
+
+void load_save(void) {
+    ENABLE_RAM;
+    SWITCH_RAM(0);  // Select RAM bank 0
+    memcpy((void *)&game_settings, (void *)0xA000, sizeof(game_settings));
+    DISABLE_RAM;
+
+    if(game_settings.saved == 1953) {
+        highscore = game_settings.highscore;
+        highelement = game_settings.highelement;
+    } else {
+        highscore = 0;
+        highelement = 0;
     }
-  
-    DISABLE_RAM_MBC5;
-    
-  
 }
 
+// TODO: warning on failure to save?
+void save_game(void) {
+    game_settings.highscore = highscore;
+    game_settings.highelement = highelement;
+    game_settings.saved = 1953;
 
+    ENABLE_RAM;
+    SWITCH_RAM(0);  // Select RAM bank 0
+    memcpy((void *)0xA000, (void *)&game_settings, sizeof(game_settings));
+    DISABLE_RAM;
+}

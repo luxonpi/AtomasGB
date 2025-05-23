@@ -36,8 +36,8 @@ extern app_state_t app_state;
 extern game_state_t game_state;
 
 // Atom configuration
-#define INITIAL_ATOMS 10
-#define MAX_ATOMS 20
+#define INITIAL_ATOMS 4
+#define MAX_ATOMS 12
 
 // Special atom types
 #define PLUS_ATOM 120
@@ -46,8 +46,7 @@ extern game_state_t game_state;
 
 
 // External variables
-extern uint16_t highscore;
-extern uint16_t highelement;
+
 extern uint16_t score;
 extern uint16_t latest_element;
 extern uint8_t new_highscore;

@@ -1,9 +1,12 @@
 #ifndef SAVED_DATA_HEADER
 #define SAVED_DATA_HEADER
 
+extern uint16_t highscore;
+extern uint16_t highelement;
+
 #include <gb/gb.h>
 
-void save_game(uint16_t highscore, uint16_t highelement);
-void load_save(uint16_t * highscore, uint16_t* highelement);
+void save_game();
+void load_save();
 
 #endif
