@@ -384,6 +384,8 @@ void update_game(){
                 
                 if(atoms[atoms_to_middle_index].value!=PLUS_ATOM && atoms[atoms_to_middle_index].value!=MINUS_ATOM){
                     score += atoms[atoms_to_middle_index].value;
+                    // Play a rising note based on the atom's value
+                    play_note(C4 + (atoms_to_middle_index % 12));
                 }
                 // Move atom to center by reducing target radius
                 atoms[atoms_to_middle_index].target_radius = 0;
