@@ -21,7 +21,7 @@ The game ends when the circle contains 12 atoms—so plan carefully and try to r
 
 ## Download Rom
 
-[itch.io](https://github.com/gbdk-2020/gbdk-2020](https://luxon-pi.itch.io/atomasgb)
+[itch.io](https://luxon-pi.itch.io/atomasgb)
 
 ## Compilation  
 
