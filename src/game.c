@@ -111,6 +111,8 @@ void end_move(void){
         valueRange++;
     }
 
+    
+
 }
 
 void absorb_atom(uint8_t position){
@@ -286,11 +288,28 @@ void update_game(){
     }else if(game_state == GS_REACTION_ANIMATION && animation_done==1){
 
     
+        // add atom values to debug text
+        // static char debug_buffer[25] = "000000000000000000000000";  // Create modifiable buffer
+        // int i=0;
+        // for (i=0; i<numberOfAtoms; i++){
+
+        //     if(atoms[i].value==PLUS_ATOM) debug_buffer[i] = 'x';
+        //     else if(atoms[i].value==MINUS_ATOM) debug_buffer[i] = 'I';
+        //     else debug_buffer[i] = '0'+ atoms[i].value;
+
+        // }
+
+        // debug_buffer[i+1] = '\0';
+        // DebugText = debug_buffer;
+        
+
         maxReactionValue +=1;
         atoms[reaction_pos].value = maxReactionValue;
+
         score += atoms[reaction_pos].value;
 
-        if(atoms[reaction_pos].value > latest_element && atoms[reaction_pos].value < 118) latest_element = atoms[reaction_pos].value;
+        if(atoms[reaction_pos].value > latest_element && atoms[reaction_pos].value < 118) 
+        latest_element = atoms[reaction_pos].value;
        
 
         // Play merge sound with increasing pitch based on consecutive reactions
@@ -298,21 +317,42 @@ void update_game(){
         play_merge_atom_sound(consecutive_reactions);
 
        
-        
-        // 1 2 3 3 3 4 4 4 2 
-        // plus atom and right atom are removed, shift all atoms to the left by two
-        for(uint8_t j = reaction_pos+3; j < numberOfAtoms; j++) {
-            atoms[j-2] = atoms[j];
-        }
+        // 1 2 3 4 5 6 7 8 9 10 Number
+        // 0 1 2 3 4 5 6 7 8 9 Index
+        // 1 2 3 3 3 4 4 4 2 + Atom
+        // 2 2 3 3 3 4 4 2 +  Atom
+        // + 4 3 3 3 4 4 4 2 (4) Atom
 
+        
         // Special case: plus atom is the last atom in the array
-        // -> shift all atoms to the left by one
-        if(reaction_pos+2 >= numberOfAtoms){
+        if((reaction_pos+2)%numberOfAtoms == 0){
+            
             for(uint8_t j = 0; j < numberOfAtoms-2; j++) {
                 atoms[j] = atoms[j+1];
             }
-            if(reaction_pos>0)
+
+            // case 22+
             reaction_pos--;
+            if(reaction_pos<0) reaction_pos+=numberOfAtoms; // should never happen
+
+        // Special case: plus atom is the first atom in the array
+        }else if((reaction_pos+1)%numberOfAtoms == 0){
+           
+            for(uint8_t j = 0; j < numberOfAtoms-2; j++) {
+                atoms[j] = atoms[j+2];
+            }
+
+            // + 2 2
+            reaction_pos-=2;
+            if(reaction_pos<0) reaction_pos+=numberOfAtoms;
+
+        }else{
+
+            // plus atom and right atom are removed, shift all atoms to the left by two
+            for(uint8_t j = reaction_pos+1; j < numberOfAtoms-2; j++) {
+                atoms[j] = atoms[j+2];
+            }
+
         }
 
         numberOfAtoms -= 2;

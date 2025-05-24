@@ -12,12 +12,13 @@
 void main(void){
 
     // Initialize //
-    disable_interrupts();
+    DISPLAY_ON;
+    SHOW_BKG;
+    SHOW_SPRITES;
+
     LCDC_REG = LCDCF_ON | LCDCF_OBJON | LCDCF_BGON;
     SPRITES_8x8;
     BGP_REG = OBP0_REG = OBP1_REG = 0xE4;
-
-    enable_interrupts();
 
     app_state = AS_TITLE;
     game_state = GS_INPUT;
@@ -73,7 +74,7 @@ void main(void){
 
             update_background_music();
 
-            delay(30);
+            delay(40);
 
             // Select button to go to title screen
             if ((curr_joypad & J_SELECT) && !(prev_joypad & J_SELECT)) {
@@ -152,7 +153,7 @@ void main(void){
             
 
         prev_joypad = curr_joypad;
-        vsync();
+        wait_vbl_done();
     }
 
 

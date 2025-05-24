@@ -21,6 +21,7 @@ struct Sprite AtomSprites[20];
 struct Sprite CenterAtom;
 struct Sprite Cursor;
 
+
 // Add these at the top of the file with other variables
 #define MAX_PARTICLES 10
 struct Particle {
@@ -55,12 +56,18 @@ void clear_screen(void) {
 
 
 void show_titlescreen(void) {
+    // Disable LCD while updating background
+    DISPLAY_OFF;
+    
     // Set Background
     set_bkg_data(0, sizeof(titlescreen_tiles) / 16, titlescreen_tiles);
     set_bkg_tiles(0, 0, 20, 18, (unsigned char *) titlescreen_map);
 
     // Load sprite data
     set_sprite_data(0, 5, SpriteTiles);
+    
+    // Re-enable display
+    DISPLAY_ON;
     SHOW_SPRITES;
 
     // Initialize particles
@@ -156,6 +163,9 @@ uint8_t GetCharacterVRamTile(char character) {
 
 
 void show_gamescreen(void) {
+    // Disable LCD while updating background
+    DISPLAY_OFF;
+    
     // Set Background and font tiles
     fill_bkg_rect(0, 0, 20, 18, 0xFF);  // Clear entire background
     set_bkg_data(gamebg_TILE_COUNT,11+27,FontTiles);
@@ -168,6 +178,9 @@ void show_gamescreen(void) {
   
     // Set Sprite Tiles
     set_sprite_data(0, SPRITE_TILE_COUNT, SpriteTiles);
+    
+    // Re-enable display
+    DISPLAY_ON;
     SHOW_SPRITES;
     
     // Set Sprite Properties
@@ -230,15 +243,20 @@ void print_text_vertically_centered(int y, char* text){
 }
 
 void show_highscore_screen(void) {
+    // Disable LCD while updating background
+    DISPLAY_OFF;
+    
     // Clear entire background
     fill_bkg_rect(0, 0, 20, 18, 0xFF);
     set_bkg_data(gamebg_TILE_COUNT,11+28,FontTiles);
-
 
     // Hide all sprites
     for(uint8_t i = 0; i < MAX_ATOMS + 2; i++) {
         move_sprite(i, 0, 0);
     }
+    
+    // Re-enable display
+    DISPLAY_ON;
     
     // Write score and atom name centered vertically
     char score_buffer[10];
@@ -256,12 +274,17 @@ void show_highscore_screen(void) {
 
 
 void set_gameover_display(void) {
+    // Disable LCD while updating background
+    DISPLAY_OFF;
 
     clear_screen();
 
     set_bkg_data(0, gameover_TILE_COUNT, gameover_tiles);
     set_bkg_data(gamebg_TILE_COUNT,38,FontTiles);
     set_bkg_tiles(0, 0, 20, 18, gameover_map);
+    
+    // Re-enable display
+    DISPLAY_ON;
     
     // Write score and atom name centered vertically
     char score_buffer[10];
