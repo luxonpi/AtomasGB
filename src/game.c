@@ -8,60 +8,39 @@
 #include "sound.h"
 #include "savedata.h"
 
-
+// State Variables
 app_state_t app_state = AS_TITLE;
 game_state_t game_state = GS_INPUT;
 
+// Atom Variables
 uint8_t numberOfAtoms = INITIAL_ATOMS;
-Atom atoms[MAX_ATOMS] = {
-    {0, 0, 1, 100, 100},  
-    {0, 0, 0, 100, 100},  
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100},
-    {0, 0, 0, 100, 100}
-};
+Atom atoms[MAX_ATOMS];
+uint8_t center_atom_value = 0;
 
-
+// Score Variables
 uint8_t new_highscore=0;
-
 uint16_t score = 0;
 uint16_t latest_element = 0;
 
-uint8_t cursor_position = 0;
+uint8_t lowestValue = 1;
+uint8_t valueRange = 3;
+
+// Move Count Variables
 uint8_t moves_whithout_plus = 0;
 uint8_t moves_whithout_minus = 0;
 uint8_t moves_count = 0;
 
-uint8_t lowestValue = 1;
-uint8_t valueRange = 3;
-uint8_t center_atom_value = 0;
-
-// Add these variables at the top with other global variables
+// Game Over variables
 uint8_t atoms_to_middle_index = 0;
 uint8_t atoms_to_middle_timer = 0;
 
+uint8_t cursor_position = 0;
+uint8_t minus_absorb_position = 0;
+uint8_t consecutive_reactions = 0;  
+
 // -1 means no reaction
 int8_t reaction_pos=0;
-int16_t maxReactionValue=-1;
-
-// Add at the top with other global variables
-uint8_t minus_absorb_position = 0;
-uint8_t consecutive_reactions = 0;  // Track number of consecutive reactions
+int16_t maxReactionValue=0;
 
 void start_new_game(void){
 
@@ -118,24 +97,18 @@ void end_move(void){
 
     reaction_pos=-1;
     consecutive_reactions = 0;  // Reset counter when no more reactions
-    maxReactionValue=-1;
+    maxReactionValue=0;
 
     moves_count++;
     moves_whithout_minus++;
     moves_whithout_plus++;
 
-     if (moves_count % 30 == 0)
-    {
-
+    if (moves_count % 30 == 0){
         lowestValue++;
-
     }
 
-    if ((moves_count + 250) % 300 == 0)
-    {
-
+    if ((moves_count + 250) % 300 == 0){
         valueRange++;
-
     }
 
 }
@@ -187,7 +160,7 @@ uint8_t check_reactions(void){
 
     if(numberOfAtoms<3) return 0;
 
-    // check if any two atoms are touching
+    
     for(uint8_t i = 0; i < numberOfAtoms; i++) {
 
         if (atoms[i].value==PLUS_ATOM || reaction_pos==i) {
@@ -312,13 +285,9 @@ void update_game(){
 
     }else if(game_state == GS_REACTION_ANIMATION && animation_done==1){
 
-        // reaction
-        if(maxReactionValue!=-1 && atoms[reaction_pos].value < maxReactionValue){
-            atoms[reaction_pos].value = maxReactionValue;
-        }
-
-        atoms[reaction_pos].value += 1;
+    
         maxReactionValue +=1;
+        atoms[reaction_pos].value = maxReactionValue;
         score += atoms[reaction_pos].value;
 
         if(atoms[reaction_pos].value > latest_element && atoms[reaction_pos].value < 118) latest_element = atoms[reaction_pos].value;
